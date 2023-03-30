@@ -8,12 +8,14 @@ export const getAuthData = (options: WxkfAuth = {}) => {
     options.encodingAESKey || process.env['WECOM_APP_AES_KEY']
   const corpId = options.corpId || process.env['WECOM_CORP_ID']
   const corpSecret = options.corpSecret || process.env['WECOM_CORP_SECRET']
+  const kfOpenId = options.kfOpenId || process.env['WECOM_KF_OPEN_ID']
 
   const result = {
     token,
     encodingAESKey,
     corpId,
     corpSecret,
+    kfOpenId,
   }
 
   for (const key in result) {

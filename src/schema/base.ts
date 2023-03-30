@@ -10,4 +10,5 @@ export interface WxkfAuth {
   encodingAESKey?: string, // EncodingAESKey用于消息体的加密。
   corpId?: string, // 企微客服所属企业的id
   corpSecret?: string, // 企微客服应用的secret
+  kfOpenId?: string, // 企微客服openId
 }
