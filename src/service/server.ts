@@ -10,10 +10,10 @@ export class Server {
   private readonly logger = new Logger(Server.name)
 
   private readonly app: Express
-  private readonly auth: WxkfAuth
+  private readonly authData: WxkfAuth
 
   constructor(authData: WxkfAuth, port: number) {
-    this.auth = authData
+    this.authData = authData
 
     this.app = express()
 
@@ -34,7 +34,7 @@ export class Server {
     this.logger.info(`receive verify message: ${JSON.stringify(req.query)}`)
 
     const { msg_signature, timestamp, nonce, echostr } = req.query as unknown as GetCallbackData
-    const signature = crypto.getSignature(this.auth.token, timestamp, nonce, echostr)
+    const signature = crypto.getSignature(this.authData.token, timestamp, nonce, echostr)
     
     if (signature !== msg_signature) {
       this.logger.warn('message signature not match, will dismiss')
@@ -43,7 +43,7 @@ export class Server {
       return
     }
 
-    const { message } = crypto.decrypt(this.auth.encodingAESKey, echostr)
+    const { message } = crypto.decrypt(this.authData.encodingAESKey, echostr)
     res.send(message)
   }
 
@@ -55,7 +55,7 @@ export class Server {
     const bodyObject = await xml2js.parseStringPromise(bodyStr) as BodyXmlData
     const encryptedStr = bodyObject.xml.Encrypt[0]
 
-    const signature = crypto.getSignature(this.auth.token, timestamp, nonce, encryptedStr)
+    const signature = crypto.getSignature(this.authData.token, timestamp, nonce, encryptedStr)
     if (signature !== msg_signature) {
       this.logger.warn('message signature does not match, will dismiss')
       res.status(500)
@@ -63,12 +63,12 @@ export class Server {
       return
     }
     
-    const { message, id, random } = crypto.decrypt(this.auth.encodingAESKey, encryptedStr)
+    const { message, id, random } = crypto.decrypt(this.authData.encodingAESKey, encryptedStr)
     
     const messageObject = await xml2js.parseStringPromise(message) as EventXmlData
 
     const corpId = messageObject.xml.ToUserName[0]
-    if (corpId !== this.auth.corpId) {
+    if (corpId !== this.authData.corpId) {
       this.logger.warn('message corpId does not match, will dismiss')
       res.status(500)
       res.send('corpId not match')
@@ -76,7 +76,7 @@ export class Server {
     }
 
     const openKfId = messageObject.xml.OpenKfId[0]
-    if (openKfId !== this.auth.kfOpenId) {
+    if (openKfId !== this.authData.kfOpenId) {
       this.logger.warn('message kfOpenId does not match, will dismiss')
       res.status(500)
       res.send('kfOpenId not match')
