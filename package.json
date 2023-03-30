@@ -1,0 +1,16 @@
+{
+  "name": "wechaty-puppet-wxkf",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@chatie/tsconfig": "^4.9.2",
+    "wechaty-puppet": "^1.20.2"
+  }
+}
