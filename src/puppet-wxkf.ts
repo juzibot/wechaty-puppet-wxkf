@@ -1,6 +1,6 @@
 import { PuppetWxkfOptions } from './schema/base'
 import { Manager } from './service/manager'
-import { Logger, Puppet } from './wechaty-dep'
+import { Logger, Puppet, payloads } from './wechaty-dep'
 
 export class PuppetWxkf extends Puppet {
 
@@ -18,6 +18,10 @@ export class PuppetWxkf extends Puppet {
     this.manager.on('message', (payload) => {
       this.emit('message', payload)
     })
+    this.manager.on('ready', (payload) => {
+      this.emit('ready', payload)
+    })
+
     await this.manager.onStart()
   }
 
@@ -26,5 +30,13 @@ export class PuppetWxkf extends Puppet {
     await this.manager.onStop()
     this.manager.removeAllListeners()
     delete this.manager
+  }
+
+  override messageRawPayload(messageId: string): Promise<any> {
+    return this.manager.messagePayload(messageId)
+  }
+
+  override messageRawPayloadParser(rawPayload: any): Promise<payloads.Message> {
+    return Promise.resolve(rawPayload as payloads.Message)
   }
 }

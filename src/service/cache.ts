@@ -59,4 +59,8 @@ export class CacheService {
   async getMessage(messageId: string) {
     return this.caches.message.get(messageId)
   }
+
+  async hasMessage(messageId: string) {
+    return this.caches.message.has(messageId)
+  }
 }

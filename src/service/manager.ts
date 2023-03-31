@@ -97,6 +97,9 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       this.accessTokenRenewTimer = setTimeout(() => {
         void this.getAccessToken()
       })
+    }, {
+      queueId: 'get-access-token',
+      delayAfter: 100,
     })
 
   }
@@ -122,28 +125,33 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   private async syncMessage(token?: string) {
     this.logger.info(`syncMessage(${token})`)
-    const firstSync = !!token
+    await ExecQueueService.exec(async () => {
+      const firstSync = !token
 
-    let cursor = await this.cacheService.getProperty('messageSeq')
-    let hasNext = true
-    while (hasNext) {
-      const requestData: RequestTypeMapping[RequestTypes.SYNC_MESSAGE] = {
-        cursor,
-        voice_format: VoiceFormat.VOICE_FORMAT_SILK,
-        open_kfid: this.authData.kfOpenId,
-        token
+      let cursor = await this.cacheService.getProperty('messageSeq')
+      let hasNext = true
+      while (hasNext) {
+        const requestData: RequestTypeMapping[RequestTypes.SYNC_MESSAGE] = {
+          cursor,
+          voice_format: VoiceFormat.VOICE_FORMAT_SILK,
+          open_kfid: this.authData.kfOpenId,
+          token
+        }
+        const responseData = await this.request(RequestTypes.SYNC_MESSAGE, requestData)
+        hasNext = responseData.has_more === TrueOrFalse.TRUE
+        cursor = responseData.next_cursor
+        void this.handleMessages(responseData.msg_list, firstSync)
       }
-      const responseData = await this.request(RequestTypes.SYNC_MESSAGE, requestData)
-      hasNext = responseData.has_more === TrueOrFalse.TRUE
-      cursor = responseData.next_cursor
-      void this.handleMessages(responseData.msg_list, firstSync)
-    }
-    await this.cacheService.setProperty('messageSeq', cursor)
+      await this.cacheService.setProperty('messageSeq', cursor)
+    }, {
+      queueId: 'sync-message',
+      delayAfter: 100,
+    })
   }
 
   async handleMessages(messages: WxkfMessage<MessageTypes>[], firstSync = false) {
     for (const message of messages) {
-      if (Date.now() - timestampToMilliseconds(message.send_time) > HISTORY_MESSAGE_TIME_THRESHOLD) {
+      if (Date.now() - timestampToMilliseconds(message.send_time) > HISTORY_MESSAGE_TIME_THRESHOLD || await this.cacheService.hasMessage(message.msgid)) {
         continue
       }
 
@@ -159,5 +167,14 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
         })
       }
     }
+  }
+
+  async messagePayload(messageId: string) {
+    const messageInCache = await this.cacheService.getMessage(messageId)
+    if (!messageInCache) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `failed to find message for id ${messageId}`)
+    }
+
+    return messageInCache
   }
 }
