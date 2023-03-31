@@ -14,6 +14,7 @@ import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
 import { ManagerEvents } from '../schema/event'
 import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'node:events'
+import { convertMessageToPayload } from '../util/message-helper'
 export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEvents>) {
   private readonly logger = new Logger(Manager.name)
 
@@ -64,6 +65,9 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
   async onStart() {
     this.logger.info('onStart()')
     await this.syncMessage()
+    this.emit('ready', {
+      data: 'data ready'
+    })
   }
 
   async onStop() {
@@ -137,13 +141,14 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     await this.cacheService.setProperty('messageSeq', cursor)
   }
 
-  handleMessages(messages: WxkfMessage<MessageTypes>[], firstSync = false) {
+  async handleMessages(messages: WxkfMessage<MessageTypes>[], firstSync = false) {
     for (const message of messages) {
       if (Date.now() - timestampToMilliseconds(message.send_time) > HISTORY_MESSAGE_TIME_THRESHOLD) {
         continue
       }
 
-      console.log(message)
+      const messagePayload = convertMessageToPayload(message)
+      await this.cacheService.setMessage(messagePayload.id, messagePayload)
 
       if (!firstSync) {
         this.emit('message', {

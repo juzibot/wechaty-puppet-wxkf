@@ -3,12 +3,14 @@ import fs from 'fs-extra'
 import os from 'os'
 
 import { FlashStore } from 'flash-store'
+import { payloads } from '../wechaty-dep'
 
 
 export class CacheService {
 
   private readonly caches: {
     property: FlashStore<string, string>
+    message: FlashStore<string, payloads.Message>
   }
 
   constructor (userId: string) {
@@ -27,7 +29,8 @@ export class CacheService {
     }
 
     this.caches = {
-      property: new FlashStore(path.join(baseDir, 'property'))
+      property: new FlashStore(path.join(baseDir, 'property')),
+      message: new FlashStore(path.join(baseDir, 'message')),
     }
   }
 
@@ -46,5 +49,13 @@ export class CacheService {
 
   async getProperty(key: string) {
     return this.caches.property.get(key)
+  }
+
+  async setMessage(messageId: string, payload: payloads.Message) {
+    await this.caches.message.set(messageId, payload)
+  }
+
+  async getMessage(messageId: string) {
+    return this.caches.message.get(messageId)
   }
 }

@@ -36,6 +36,7 @@ export type WxkfMessageBase = {
   send_time: number // 消息发送时间
   origin: MessageOrigin // 消息来源。3-微信客户发送的消息 4-系统推送的事件消息 5-接待人员在企业微信客户端发送的消息
   servicer_userid: string // 从企业微信给客户发消息的接待人员userid（即仅origin为5才返回；msgtype为event，该字段不返回）
+  msgtype: MsgType
 }
 
 export enum VoiceFormat {
@@ -54,11 +55,15 @@ export enum MessageOrigin {
   WECOM_CLIENT = 5, // 接待人员在企业微信客户端发送的消息
 }
 
+export enum MsgType {
+  MSG_TYPE_TEXT = 'text'
+}
+
 export type MessageTypes = 
   | TextMessage
 
 export interface TextMessage {
-  msgtype: 'text',
+  msgtype: MsgType.MSG_TYPE_TEXT
   text: {
     content: string,
     menu_id?: string, // 客户点击菜单消息，触发的回复消息中附带的菜单ID
