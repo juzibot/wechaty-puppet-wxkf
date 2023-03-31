@@ -148,6 +148,9 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       }
 
       const messagePayload = convertMessageToPayload(message)
+      if (!messagePayload) {
+        this.logger.warn(`unsupported message type ${ message.msgtype }, message dismissed`)
+      }
       await this.cacheService.setMessage(messagePayload.id, messagePayload)
 
       if (!firstSync) {

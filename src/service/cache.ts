@@ -4,13 +4,14 @@ import os from 'os'
 
 import { FlashStore } from 'flash-store'
 import { payloads } from '../wechaty-dep'
+import { MessagePayloadCache } from '../schema/cache'
 
 
 export class CacheService {
 
   private readonly caches: {
     property: FlashStore<string, string>
-    message: FlashStore<string, payloads.Message>
+    message: FlashStore<string, MessagePayloadCache>
   }
 
   constructor (userId: string) {
@@ -51,7 +52,7 @@ export class CacheService {
     return this.caches.property.get(key)
   }
 
-  async setMessage(messageId: string, payload: payloads.Message) {
+  async setMessage(messageId: string, payload: MessagePayloadCache) {
     await this.caches.message.set(messageId, payload)
   }
 

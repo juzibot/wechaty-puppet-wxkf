@@ -56,11 +56,38 @@ export enum MessageOrigin {
 }
 
 export enum MsgType {
-  MSG_TYPE_TEXT = 'text'
+  MSG_TYPE_TEXT = 'text',
+  MSG_TYPE_IMAGE = 'image',
+  MSG_TYPE_VOICE = 'voice',
+  MSG_TYPE_VIDEO = 'video',
+  MSG_TYPE_FILE = 'file',
+  MSG_TYPE_LOCATION = 'location',
+  MSG_TYPE_LINK = 'link',
+  MSG_TYPE_BUSINESS_CARD = 'business_card',
+  MSG_TYPE_MINIPROGRAM = 'miniprogram',
+  MSG_TYPE_CHANNEL = 'channels',
+
+  // unsupported message types
+  MSG_TYPE_MENU = 'msgmenu',
+  MSG_TYPE_CHANNEL_PRODUCT = 'channels_shop_product',
+  MSG_TYPE_CHANNEL_ORDER = 'channel_shop_order',
+  MSG_TYPE_CHAT_HISTORY = 'merged_msg',
+  MSG_TYPE_MEETING = 'meeting',
+  MSG_TYPE_SCHEDULE = 'schedule',
 }
 
 export type MessageTypes = 
   | TextMessage
+  | ImageMessage
+  | VoiceMessage
+  | VideoMessage
+  | FileMessage
+  | LocationMessage
+  | LinkMessage
+  | BusinessCardMessage
+  | MiniProgramMessage
+  | ChannelMessage
+  | UnsupportedMessage
 
 export interface TextMessage {
   msgtype: MsgType.MSG_TYPE_TEXT
@@ -68,4 +95,83 @@ export interface TextMessage {
     content: string,
     menu_id?: string, // 客户点击菜单消息，触发的回复消息中附带的菜单ID
   }
+}
+
+export interface ImageMessage {
+  msgtype: MsgType.MSG_TYPE_IMAGE
+  image: {
+    media_id: string
+  }
+}
+
+export interface VoiceMessage {
+  msgtype: MsgType.MSG_TYPE_VOICE
+  voice: {
+    media_id: string
+  }
+}
+
+export interface VideoMessage {
+  msgtype: MsgType.MSG_TYPE_VIDEO
+  video: {
+    media_id: string
+  }
+}
+
+export interface FileMessage {
+  msgtype: MsgType.MSG_TYPE_FILE
+  file: {
+    media_id: string
+  }
+}
+
+export interface LocationMessage {
+  msgtype: MsgType.MSG_TYPE_LOCATION
+  location: {
+    latitude: number,
+    longitude: number,
+    name: string,
+    address: string
+  }
+}
+
+export interface LinkMessage {
+  msgtype: MsgType.MSG_TYPE_LINK,
+  link: {
+    title: string,
+    desc: string,
+    url: string,
+    pic_url: string
+  }
+}
+
+export interface BusinessCardMessage {
+  msgtype: MsgType.MSG_TYPE_BUSINESS_CARD
+  business_card: {
+    userid: string
+  }
+}
+
+export interface MiniProgramMessage {
+  msgtype: MsgType.MSG_TYPE_MINIPROGRAM,
+  miniprogram: {
+    title: string,
+    appid: string,
+    pagepath: string,
+    thumb_media_id: string
+  }
+}
+
+export interface ChannelMessage {
+  msgtype: MsgType.MSG_TYPE_CHANNEL
+}
+
+export interface UnsupportedMessage {
+  msgtype:
+  | MsgType.MSG_TYPE_MENU
+  | MsgType.MSG_TYPE_CHANNEL_PRODUCT
+  | MsgType.MSG_TYPE_CHANNEL_ORDER
+  | MsgType.MSG_TYPE_CHAT_HISTORY
+  | MsgType.MSG_TYPE_MEETING
+  | MsgType.MSG_TYPE_SCHEDULE
 }
