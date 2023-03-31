@@ -1,5 +1,6 @@
 export enum WXKF_ERROR {
-  AUTH_ERROR = 100
+  AUTH_ERROR = 100,
+  SERVER_ERROR = 200,
 }
 
 export const WXKF_ERROR_CODE = {

@@ -12,18 +12,3 @@ export interface WxkfAuth {
   corpSecret?: string, // 企微客服应用的secret
   kfOpenId?: string, // 企微客服openId
 }
-
-export const baseUrl = 'https://qyapi.weixin.qq.com/cgi-bin'
-
-export const urlMapping = {
-  getAccessToken: '/gettoken'
-}
-
-export interface GetAccessTokenRequest {
-  corpid: string,
-  corpsecret: string,
-}
-
-export interface GetAccessTokenResponse {
-
-}
