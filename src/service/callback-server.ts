@@ -5,14 +5,18 @@ import { Logger } from '../wechaty-dep'
 import * as crypto from '@wecom/crypto'
 import xml2js from 'xml2js'
 import { GetCallbackData, PostCallbackData, BodyXmlData, EventXmlData } from 'src/schema/callback'
+import { CallbackServerEvents } from '../schema/event'
+import TypedEmitter from 'typed-emitter'
+import EventEmitter from 'node:events'
 
-export class Server {
-  private readonly logger = new Logger(Server.name)
+export class CallbackServer extends (EventEmitter as new () => TypedEmitter<CallbackServerEvents>) {
+  private readonly logger = new Logger(CallbackServer.name)
 
   private readonly app: Express
   private readonly authData: WxkfAuth
 
   constructor(authData: WxkfAuth, port: number) {
+    super()
     this.authData = authData
 
     this.app = express()
@@ -81,6 +85,11 @@ export class Server {
       res.status(500)
       res.send('kfOpenId not match')
       return
+    }
+
+    const eventType = messageObject.xml.Event[0]
+    if (eventType === 'kf_msg_or_event') {
+      this.emit('message', messageObject.xml.Token[0])
     }
 
     res.send('')

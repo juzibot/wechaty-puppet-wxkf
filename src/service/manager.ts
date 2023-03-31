@@ -1,19 +1,27 @@
 import { PuppetWxkfOptions, WxkfAuth } from '../schema/base'
 import { getAuthData, getPort } from '../util/env'
-import { Server } from './server'
+import { CallbackServer } from './callback-server'
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
-import { MINUTE, SECOND } from '../util/time'
+import { MINUTE, SECOND, timestampToMilliseconds } from '../util/time'
 import { ExecQueueService } from './exec-queue'
 import { baseUrl, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
-import WxkfError from 'src/error/error'
-import { WXKF_ERROR, WXKF_ERROR_CODE } from 'src/error/error-code'
-import { GetAccessTokenRequest, GetAccessTokenResponse } from 'src/schema/request'
+import WxkfError from '../error/error'
+import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
+import { GetAccessTokenRequest, GetAccessTokenResponse, MessageTypes, TrueOrFalse, VoiceFormat, WxkfMessage } from '../schema/request'
+import { Logger } from '../wechaty-dep'
+import { CacheService } from './cache'
+import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
+import { ManagerEvents } from '../schema/event'
+import TypedEmitter from 'typed-emitter'
+import EventEmitter from 'node:events'
+export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEvents>) {
+  private readonly logger = new Logger(Manager.name)
 
-export class Manager {
-  private readonly server: Server
+  private readonly callbackServer: CallbackServer
   private readonly authData: WxkfAuth
 
   private readonly postRequestInstance: AxiosInstance
+  private readonly cacheService: CacheService
 
   private accessToken?: string
   private accessTokenExpireTime?: number
@@ -21,11 +29,15 @@ export class Manager {
   private accessTokenRenewTimer: NodeJS.Timeout
 
   constructor(options: PuppetWxkfOptions) {
+    super()
     const authData = getAuthData(options['authData'])
     this.authData = authData
     const port = getPort(options.callbackPort)
 
-    this.server = new Server(authData, port)
+    this.callbackServer = new CallbackServer(authData, port)
+    this.callbackServer.on('message', this.messageHandler.bind(this) as typeof this.messageHandler)
+
+    this.cacheService = new CacheService(this.authData.kfOpenId)
 
     this.postRequestInstance = axios.create({
       baseURL: baseUrl,
@@ -47,6 +59,15 @@ export class Manager {
 
       return config
     })
+  }
+
+  async onStart() {
+    this.logger.info('onStart()')
+    await this.syncMessage()
+  }
+
+  async onStop() {
+    await this.cacheService.onStop()
   }
 
   private async getAccessToken() {
@@ -77,6 +98,7 @@ export class Manager {
   }
 
   private async request<T extends RequestTypes>(type: T, data: RequestTypeMapping[T]):Promise<ResponseTypeMapping[T]> {
+    this.logger.info(`request(${RequestTypes[type]}, ${JSON.stringify(data)})`)
     const response = await this.postRequestInstance.post<RequestTypeMapping[T], AxiosResponse<ResponseTypeMapping[T]>>(urlMapping[type], data)
 
     const responseData = response.data
@@ -84,6 +106,50 @@ export class Manager {
       throw new WxkfError(WXKF_ERROR_CODE.SERVER_ERROR, `request error with code: ${responseData.errcode}, message: ${responseData.errmsg}`)
     }
 
+    this.logger.info(`response(${RequestTypes[type]}): ${JSON.stringify(response.data)}`)
     return response.data
+  }
+
+  private messageHandler(token: string) {
+    this.logger.info(`onMessage(${token})`)
+
+    void this.syncMessage(token)
+  }
+
+  private async syncMessage(token?: string) {
+    this.logger.info(`syncMessage(${token})`)
+    const firstSync = !!token
+
+    let cursor = await this.cacheService.getProperty('messageSeq')
+    let hasNext = true
+    while (hasNext) {
+      const requestData: RequestTypeMapping[RequestTypes.SYNC_MESSAGE] = {
+        cursor,
+        voice_format: VoiceFormat.VOICE_FORMAT_SILK,
+        open_kfid: this.authData.kfOpenId,
+        token
+      }
+      const responseData = await this.request(RequestTypes.SYNC_MESSAGE, requestData)
+      hasNext = responseData.has_more === TrueOrFalse.TRUE
+      cursor = responseData.next_cursor
+      void this.handleMessages(responseData.msg_list, firstSync)
+    }
+    await this.cacheService.setProperty('messageSeq', cursor)
+  }
+
+  handleMessages(messages: WxkfMessage<MessageTypes>[], firstSync = false) {
+    for (const message of messages) {
+      if (Date.now() - timestampToMilliseconds(message.send_time) > HISTORY_MESSAGE_TIME_THRESHOLD) {
+        continue
+      }
+
+      console.log(message)
+
+      if (!firstSync) {
+        this.emit('message', {
+          messageId: message.msgid
+        })
+      }
+    }
   }
 }

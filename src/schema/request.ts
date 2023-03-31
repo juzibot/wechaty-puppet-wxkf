@@ -24,17 +24,18 @@ export interface SyncMessageRequest {
 export interface SyncMessageResponse extends ResponseBase {
   next_cursor: string // 下次调用带上该值，则从当前的位置继续往后拉，以实现增量拉取。强烈建议对该字段入库保存，每次请求读取带上，请求结束后更新。避免因意外丢，导致必须从头开始拉取，引起消息延迟。
   has_more: TrueOrFalse // 是否还有更多数据。0-否；1-是。不能通过判断msg_list是否空来停止拉取，可能会出现has_more为1，而msg_list为空的情况
-  msg_list: WxkfMessage // 消息列表
+  msg_list: WxkfMessage<MessageTypes>[] // 消息列表
 }
 
-export interface WxkfMessage {
+export type WxkfMessage<T extends MessageTypes> = WxkfMessageBase & T
+
+export type WxkfMessageBase = {
   msgid: string // 消息ID
   open_kfid?: string // 客服帐号ID（msgtype为event，该字段不返回）
   external_userid?: string // 客户UserID（msgtype为event，该字段不返回）
   send_time: number // 消息发送时间
   origin: MessageOrigin // 消息来源。3-微信客户发送的消息 4-系统推送的事件消息 5-接待人员在企业微信客户端发送的消息
   servicer_userid: string // 从企业微信给客户发消息的接待人员userid（即仅origin为5才返回；msgtype为event，该字段不返回）
-  msgtype: MessageTypes // 对不同的msgtype，有相应的结构描述，下面进一步说明
 }
 
 export enum VoiceFormat {
