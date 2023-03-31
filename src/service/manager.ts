@@ -7,7 +7,7 @@ import { ExecQueueService } from './exec-queue'
 import { baseUrl, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
 import WxkfError from '../error/error'
 import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
-import { GetAccessTokenRequest, GetAccessTokenResponse, MessageTypes, TrueOrFalse, VoiceFormat, WxkfMessage } from '../schema/request'
+import { GetAccessTokenRequest, GetAccessTokenResponse, MessageTypes, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, VoiceFormat, WxkfMessage } from '../schema/request'
 import { Logger } from '../wechaty-dep'
 import { CacheService } from './cache'
 import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
@@ -176,5 +176,20 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     }
 
     return messageInCache
+  }
+
+  async messageSendText(toId: string, text: string) {
+    const data: SendMessageRequest<TextMessage> = {
+      touser: toId,
+      open_kfid: this.authData.kfOpenId,
+      msgtype: MsgType.MSG_TYPE_TEXT,
+      text: {
+        content: text,
+      }
+    }
+    
+    const response = await this.request(RequestTypes.SEND_MESSAGE, data)
+
+    return response.msgid
   }
 }

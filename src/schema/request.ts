@@ -175,3 +175,16 @@ export interface UnsupportedMessage {
   | MsgType.MSG_TYPE_MEETING
   | MsgType.MSG_TYPE_SCHEDULE
 }
+
+export type SendMessageRequest<T extends MessageTypes> = SendMessageRequestBase & T
+
+export interface SendMessageRequestBase {
+  touser: string,
+  open_kfid: string,
+  msgid?: string // 如果请求参数指定了msgid，则原样返回，否则系统自动生成并返回。若指定msgid，开发者需确保客服账号内唯一，否则接口返回错误。
+  msgtype: MsgType
+}
+
+export interface SendMessageResponse extends ResponseBase {
+  msgid: string
+}

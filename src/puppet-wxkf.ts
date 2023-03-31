@@ -39,4 +39,8 @@ export class PuppetWxkf extends Puppet {
   override messageRawPayloadParser(rawPayload: any): Promise<payloads.Message> {
     return Promise.resolve(rawPayload as payloads.Message)
   }
+
+  override messageSendText(conversationId: string, text: string): Promise<string | void> {
+    return this.manager.messageSendText(conversationId, text)
+  }
 }
