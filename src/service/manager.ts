@@ -77,6 +77,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   async onStop() {
     await this.cacheService.onStop()
+    this.callbackServer.onStop()
   }
 
   private async getAccessToken() {

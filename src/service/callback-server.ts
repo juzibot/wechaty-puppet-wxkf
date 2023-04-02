@@ -8,11 +8,13 @@ import { GetCallbackData, PostCallbackData, BodyXmlData, EventXmlData } from 'sr
 import { CallbackServerEvents } from '../schema/event'
 import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'node:events'
+import * as http from 'http'
 
 export class CallbackServer extends (EventEmitter as new () => TypedEmitter<CallbackServerEvents>) {
   private readonly logger = new Logger(CallbackServer.name)
 
   private readonly app: Express
+  private readonly server: http.Server
   private readonly authData: WxkfAuth
 
   constructor(authData: WxkfAuth, port: number) {
@@ -28,7 +30,7 @@ export class CallbackServer extends (EventEmitter as new () => TypedEmitter<Call
     this.app.get('/callback', this.onGetCallback.bind(this) as typeof this.onGetCallback)
     this.app.post('/callback', this.onPostCallback.bind(this) as typeof this.onPostCallback)
 
-    this.app.listen(port, () => {
+    this.server = this.app.listen(port, () => {
       this.logger.info(`callback server started on port ${port}`)
     })
   }
@@ -93,5 +95,9 @@ export class CallbackServer extends (EventEmitter as new () => TypedEmitter<Call
     }
 
     res.send('')
+  }
+
+  onStop() {
+    this.server.close()
   }
 }
