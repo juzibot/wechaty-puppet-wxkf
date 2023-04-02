@@ -21,6 +21,9 @@ export class PuppetWxkf extends Puppet {
     this.manager.on('ready', (payload) => {
       this.emit('ready', payload)
     })
+    this.manager.on('login', (payload) => {
+      this.emit('login', payload)
+    })
 
     await this.manager.onStart()
   }

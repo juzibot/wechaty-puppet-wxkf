@@ -7,7 +7,7 @@ import { ExecQueueService } from './exec-queue'
 import { baseUrl, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
 import WxkfError from '../error/error'
 import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
-import { GetAccessTokenRequest, GetAccessTokenResponse, MessageTypes, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, VoiceFormat, WxkfMessage } from '../schema/request'
+import { GetAccessTokenRequest, GetAccessTokenResponse, GetKfAccountListRequest, MessageTypes, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, VoiceFormat, WxkfMessage } from '../schema/request'
 import { Logger } from '../wechaty-dep'
 import { CacheService } from './cache'
 import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
@@ -64,6 +64,10 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   async onStart() {
     this.logger.info('onStart()')
+    await this.getSelfInfo()
+    this.emit('login', {
+      contactId: this.authData.kfOpenId
+    })
     await this.syncMessage()
     this.emit('ready', {
       data: 'data ready'
@@ -147,6 +151,37 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       queueId: 'sync-message',
       delayAfter: 100,
     })
+  }
+
+  private async getSelfInfo() {
+    const limit = 100
+    let offset = 0
+    while (true) {
+      const data: GetKfAccountListRequest = {
+        offset,
+        limit: 100
+      }
+      const response = await this.request(RequestTypes.GET_KF_ACCOUNT_LIST, data)
+
+      const accounts = response.account_list
+      const currentAccount = accounts.filter(account => account.open_kfid === this.authData.kfOpenId)
+      if (currentAccount.length > 0) {
+        if (currentAccount[0].manage_privilege) {
+          const contactSelf = currentAccount[0]
+          await this.cacheService.setContact(contactSelf.open_kfid, {
+            id: contactSelf.open_kfid,
+            name: contactSelf.name,
+            avatar: contactSelf.avatar,
+          })
+          return
+        }
+        throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot manage wxkf id: ${this.authData.kfOpenId}, you don't have required privilege`)
+      }
+      if (accounts.length < limit) {
+        throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot find wxkf with id: ${this.authData.kfOpenId}`)
+      }
+      offset += 100
+    }
   }
 
   async handleMessages(messages: WxkfMessage<MessageTypes>[], firstSync = false) {

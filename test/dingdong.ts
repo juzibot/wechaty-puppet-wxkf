@@ -6,6 +6,10 @@ puppet.on('error', (e) => {
   console.log((e as Error).message)
 })
 
+puppet.on('login', async payload => {
+  console.log(payload)
+})
+
 puppet.on('message', async payload => {
   console.log('message', payload)
 

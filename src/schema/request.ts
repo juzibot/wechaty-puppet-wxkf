@@ -188,3 +188,19 @@ export interface SendMessageRequestBase {
 export interface SendMessageResponse extends ResponseBase {
   msgid: string
 }
+
+export interface GetKfAccountListRequest {
+  offset?: number // 分页，偏移量, 默认为0
+  limit?: number // 分页，预期请求的数据量，默认为100，取值范围 1 ~ 100
+}
+
+export interface GetKfAccountListResponse extends ResponseBase {
+  account_list: KfAccount[]
+}
+
+export interface KfAccount {
+  open_kfid: string
+  name: string
+  avatar: string
+  manage_privilege: boolean // 当前调用接口的应用身份，是否有该客服账号的管理权限（编辑客服帐号信息、分配会话和收发消息）
+}
