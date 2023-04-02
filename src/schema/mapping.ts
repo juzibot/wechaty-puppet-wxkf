@@ -1,4 +1,4 @@
-import { GetAccessTokenRequest, GetAccessTokenResponse, GetKfAccountListRequest, GetKfAccountListResponse, MessageTypes, SendMessageRequest, SendMessageResponse, SyncMessageRequest, SyncMessageResponse } from './request'
+import { GetAccessTokenRequest, GetAccessTokenResponse, GetContactInfoRequest, GetContactInfoResponse, GetKfAccountListRequest, GetKfAccountListResponse, MessageTypes, SendMessageRequest, SendMessageResponse, SyncMessageRequest, SyncMessageResponse } from './request'
 
 export const baseUrl = 'https://qyapi.weixin.qq.com/cgi-bin'
 
@@ -7,6 +7,7 @@ export enum RequestTypes {
   SYNC_MESSAGE,
   SEND_MESSAGE,
   GET_KF_ACCOUNT_LIST,
+  BATCH_GET_CUSTOMER_INFO,
 }
 
 export const urlMapping = {
@@ -14,6 +15,7 @@ export const urlMapping = {
   [RequestTypes.SYNC_MESSAGE]: '/kf/sync_msg',
   [RequestTypes.SEND_MESSAGE]: '/kf/send_msg',
   [RequestTypes.GET_KF_ACCOUNT_LIST]: '/kf/account/list',
+  [RequestTypes.BATCH_GET_CUSTOMER_INFO]: '/kf/customer/batchget'
 }
 
 export type RequestTypeMapping = {
@@ -21,6 +23,7 @@ export type RequestTypeMapping = {
   [RequestTypes.SYNC_MESSAGE]: SyncMessageRequest
   [RequestTypes.SEND_MESSAGE]: SendMessageRequest<MessageTypes>
   [RequestTypes.GET_KF_ACCOUNT_LIST]: GetKfAccountListRequest
+  [RequestTypes.BATCH_GET_CUSTOMER_INFO]: GetContactInfoRequest
 }
 
 export type ResponseTypeMapping = {
@@ -28,4 +31,5 @@ export type ResponseTypeMapping = {
   [RequestTypes.SYNC_MESSAGE]: SyncMessageResponse
   [RequestTypes.SEND_MESSAGE]: SendMessageResponse
   [RequestTypes.GET_KF_ACCOUNT_LIST]: GetKfAccountListResponse
+  [RequestTypes.BATCH_GET_CUSTOMER_INFO]: GetContactInfoResponse
 }

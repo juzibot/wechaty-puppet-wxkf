@@ -7,7 +7,8 @@ puppet.on('error', (e) => {
 })
 
 puppet.on('login', async payload => {
-  console.log(payload)
+  const contact = await puppet.contactPayload(payload.contactId)
+  console.log(contact)
 })
 
 puppet.on('message', async payload => {
@@ -15,11 +16,15 @@ puppet.on('message', async payload => {
 
   const messageId = payload.messageId
 
-  const messagePayload = await puppet.messageRawPayloadParser(await puppet.messagePayload(messageId))
+  const messagePayload = await puppet.messagePayload(messageId)
 
   if (messagePayload.text === 'ding') {
     await puppet.messageSendText(messagePayload.talkerId, 'dong')
   }
+
+  const contact = await puppet.contactPayload(messagePayload.talkerId)
+  console.log(contact)
+
 })
 
 puppet.on('ready', payload => {

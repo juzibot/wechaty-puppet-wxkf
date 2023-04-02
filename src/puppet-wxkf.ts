@@ -1,5 +1,7 @@
 import { PuppetWxkfOptions } from './schema/base'
+import { ContactPayloadCache } from './schema/cache'
 import { Manager } from './service/manager'
+import { convertContactPayloadCacheToWecahtyPayload } from './util/contact-helper'
 import { Logger, Puppet, payloads } from './wechaty-dep'
 
 export class PuppetWxkf extends Puppet {
@@ -46,4 +48,13 @@ export class PuppetWxkf extends Puppet {
   override messageSendText(conversationId: string, text: string): Promise<string | void> {
     return this.manager.messageSendText(conversationId, text)
   }
+
+  override contactRawPayload(contactId: string): Promise<ContactPayloadCache> {
+    return this.manager.contactPayload(contactId)
+  }
+
+  override contactRawPayloadParser(rawPayload: ContactPayloadCache): Promise<payloads.Contact> {
+    return Promise.resolve(convertContactPayloadCacheToWecahtyPayload(rawPayload))
+  }
+
 }

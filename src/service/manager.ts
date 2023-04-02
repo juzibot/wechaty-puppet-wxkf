@@ -15,6 +15,7 @@ import { ManagerEvents } from '../schema/event'
 import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'node:events'
 import { convertMessageToPayload } from '../util/message-helper'
+import { convertContactToPayload } from '../util/contact-helper'
 export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEvents>) {
   private readonly logger = new Logger(Manager.name)
 
@@ -226,5 +227,22 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     const response = await this.request(RequestTypes.SEND_MESSAGE, data)
 
     return response.msgid
+  }
+
+  async contactPayload(contactId: string) {
+    const contactInCache = await this.cacheService.getContact(contactId)
+    if (contactInCache) {
+      return contactInCache
+    }
+    const customerInfo = (await this.request(RequestTypes.BATCH_GET_CUSTOMER_INFO, {
+      external_userid_list: [contactId]
+    })).customer_list[0]
+    if (customerInfo) {
+      const contactPayloadCache = convertContactToPayload(customerInfo)
+      await this.cacheService.setContact(contactId, contactPayloadCache)
+      return contactPayloadCache
+    }
+
+    throw new WxkfError(WXKF_ERROR.CONTACT_PARSE_ERROR, `cannot find contact for id: ${contactId}`)
   }
 }

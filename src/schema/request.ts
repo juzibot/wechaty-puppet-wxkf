@@ -204,3 +204,47 @@ export interface KfAccount {
   avatar: string
   manage_privilege: boolean // 当前调用接口的应用身份，是否有该客服账号的管理权限（编辑客服帐号信息、分配会话和收发消息）
 }
+
+export interface GetContactInfoRequest {
+  external_userid_list: string[]
+  need_enter_session_context?: TrueOrFalse
+}
+
+export interface GetContactInfoResponse extends ResponseBase {
+  customer_list: Customer[]
+}
+
+export interface Customer {
+  external_userid: string
+  nickname: string
+  avatar: string // 微信头像。第三方不可获取
+  gender: Gender // 性别。第三方不可获取，统一返回0
+  unionid: string // unionid，需要绑定微信开发者帐号才能获取到，查看绑定方法。第三方不可获取
+  enter_session_context?: CustomerSession
+}
+
+export interface CustomerSession {
+  scene: string // 进入会话的场景值，获取客服帐号链接开发者自定义的场景值
+  scene_param: string // 进入会话的自定义参数，获取客服帐号链接返回的url，开发者按规范拼接的scene_param参数
+  wechat_channels: CustomerSessionChannel // 进入会话的视频号信息，从视频号进入会话才有值
+}
+
+export interface CustomerSessionChannel {
+  nickname?: string // 视频号名称，视频号场景值为1、2、3时返回此项
+  shop_nickname?: string // 视频号小店名称，视频号场景值为4、5时返回此项
+  scene: CustomerSessionChannelScene // 视频号场景值
+}
+
+export enum CustomerSessionChannelScene {
+  HOMEPAGE = 1, // 视频号主页
+  LIVE_PRODUCT_LIST = 2, // 视频号直播间商品列表页
+  DISPLAY_WINDOW = 3, // 视频号商品橱窗页
+  CHANNEL_SHOP_PRODUCT_DETAIL = 4, // 视频号小店商品详情页
+  CHANNEL_SHOP_ORDER = 5, // 视频号小店订单页
+}
+
+export enum Gender {
+  Unknown = 0,
+  Male = 1,
+  Female = 2,
+}
