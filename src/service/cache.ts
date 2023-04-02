@@ -3,8 +3,7 @@ import fs from 'fs-extra'
 import os from 'os'
 
 import { FlashStore } from 'flash-store'
-import { payloads } from '../wechaty-dep'
-import { MessagePayloadCache } from '../schema/cache'
+import { ContactPayloadCache, MessagePayloadCache } from '../schema/cache'
 
 
 export class CacheService {
@@ -12,6 +11,7 @@ export class CacheService {
   private readonly caches: {
     property: FlashStore<string, string>
     message: FlashStore<string, MessagePayloadCache>
+    contact: FlashStore<string, ContactPayloadCache>
   }
 
   constructor (userId: string) {
@@ -32,6 +32,7 @@ export class CacheService {
     this.caches = {
       property: new FlashStore(path.join(baseDir, 'property')),
       message: new FlashStore(path.join(baseDir, 'message')),
+      contact: new FlashStore(path.join(baseDir, 'contact')),
     }
   }
 
@@ -62,5 +63,13 @@ export class CacheService {
 
   async hasMessage(messageId: string) {
     return this.caches.message.has(messageId)
+  }
+
+  async setContact(contactId: string, payload: ContactPayloadCache) {
+    await this.caches.contact.set(contactId, payload)
+  }
+
+  async getContact(contactId: string) {
+    return this.caches.contact.get(contactId)
   }
 }
