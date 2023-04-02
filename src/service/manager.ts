@@ -16,6 +16,12 @@ import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'node:events'
 import { convertMessageToPayload } from '../util/message-helper'
 import { convertContactToPayload } from '../util/contact-helper'
+import { FileBox } from '../filebox-dep'
+import path from 'path'
+import { FILE_SIZE_THRESHOLD, FileTempDir, getContentType, getDefaultFilename, getFileType } from '../util/file-helper'
+import fs from 'fs-extra'
+import uuid from 'uuid'
+
 export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEvents>) {
   private readonly logger = new Logger(Manager.name)
 
@@ -66,6 +72,8 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
   async onStart() {
     this.logger.info('onStart()')
     await this.getSelfInfo()
+
+    fs.mkdirpSync(FileTempDir)
     this.emit('login', {
       contactId: this.authData.kfOpenId
     })
@@ -228,6 +236,48 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     const response = await this.request(RequestTypes.SEND_MESSAGE, data)
 
     return response.msgid
+  }
+
+  private async uploadMedia(file: FileBox) {
+    await file.ready()
+    const type =
+      file.mediaType && file.mediaType !== 'application/octet-stream' && file.mediaType !== 'application/unknown'
+        ? file.mediaType.replace(/;.*$/, '')
+        : path.extname(file.name)
+
+    const size = file.size
+    const filename = file.name
+    const fileType = getFileType(type)
+
+    if (size > FILE_SIZE_THRESHOLD[fileType]) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_SEND_ERROR_PARAM, `cannot send file, size over limit`)
+    }
+
+    const localPath = path.join(
+      FileTempDir,
+      uuid.v4(),
+    )
+
+    await file.toFile(localPath, true)
+    const localFile = FileBox.fromFile(localPath, filename)
+
+    await axios.post(`${baseUrl}/media/upload`, {
+      filename: filename || getDefaultFilename(fileType),
+      filelength: localFile.size,
+      'Content-Type': getContentType(type),
+      media: await file.toStream()
+    }, {
+      params: {
+        access_token: await this.getAccessToken(),
+        type: fileType,
+      },
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    })
+
+    fs.rmSync(localPath)
+    
   }
 
   async contactPayload(contactId: string) {

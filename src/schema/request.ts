@@ -248,3 +248,22 @@ export enum Gender {
   Male = 1,
   Female = 2,
 }
+
+export interface UploadMediaRequest {
+  filename: string,
+  filelength: number,
+  'content-type': string
+}
+
+export enum FileTypes {
+  IMAGE = 'image',
+  VIDEO = 'video',
+  VOICE = 'voice',
+  FILE = 'file',
+}
+
+export interface UploadMediaResponse {
+  type: FileTypes
+  media_id: string
+  created_at: string
+}
