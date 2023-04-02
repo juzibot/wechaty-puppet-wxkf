@@ -262,8 +262,10 @@ export enum FileTypes {
   FILE = 'file',
 }
 
-export interface UploadMediaResponse {
+export interface UploadMediaResponse extends ResponseBase {
   type: FileTypes
   media_id: string
   created_at: string
 }
+
+export type FileMessageTypes = ImageMessage | VoiceMessage | VideoMessage | FileMessage

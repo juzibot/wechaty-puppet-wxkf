@@ -1,3 +1,4 @@
+import { FileBox } from './filebox-dep'
 import { PuppetWxkfOptions } from './schema/base'
 import { ContactPayloadCache } from './schema/cache'
 import { Manager } from './service/manager'
@@ -47,6 +48,10 @@ export class PuppetWxkf extends Puppet {
 
   override messageSendText(conversationId: string, text: string): Promise<string | void> {
     return this.manager.messageSendText(conversationId, text)
+  }
+
+  override messageSendFile(conversationId: string, file: FileBox): Promise<string | void> {
+    return this.manager.messageSendFile(conversationId, file)
   }
 
   override contactRawPayload(contactId: string): Promise<ContactPayloadCache> {

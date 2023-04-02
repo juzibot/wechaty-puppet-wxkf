@@ -1,7 +1,7 @@
 import { FileTypes } from '../schema/request'
 import os from 'os'
 import path from 'path'
-import uuid from 'uuid'
+import { v4 as uuidV4 } from 'uuid'
 
 const MB = 1024 * 1024
 
@@ -10,7 +10,7 @@ const isImage = (type: string) => {
 }
 
 const isVideo = (type: string) => {
-  return /mp4|video/i.test(type)
+  return /.mp4|video\/mp4/i.test(type)
 }
 
 const isVoice = (type: string) => {
@@ -41,13 +41,13 @@ export const FileTempDir = path.join(
 export const getDefaultFilename = (fileType: FileTypes) => {
   switch (fileType) {
     case FileTypes.IMAGE:
-      return `${uuid.v4()}.jpg`
+      return `${uuidV4()}.jpg`
     case FileTypes.VIDEO:
-      return `${uuid.v4()}.mp4`
+      return `${uuidV4()}.mp4`
     case FileTypes.VOICE:
-      return `${uuid.v4()}.amr`
+      return `${uuidV4()}.amr`
     default:
-      return `${uuid.v4()}.dat`
+      return `${uuidV4()}.dat`
   }
 }
 

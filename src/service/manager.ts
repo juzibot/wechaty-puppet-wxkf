@@ -7,7 +7,7 @@ import { ExecQueueService } from './exec-queue'
 import { baseUrl, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
 import WxkfError from '../error/error'
 import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
-import { GetAccessTokenRequest, GetAccessTokenResponse, GetKfAccountListRequest, MessageTypes, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, VoiceFormat, WxkfMessage } from '../schema/request'
+import { FileMessageTypes, FileTypes, GetAccessTokenRequest, GetAccessTokenResponse, GetKfAccountListRequest, ImageMessage, MessageTypes, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage } from '../schema/request'
 import { Logger } from '../wechaty-dep'
 import { CacheService } from './cache'
 import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
@@ -20,7 +20,11 @@ import { FileBox } from '../filebox-dep'
 import path from 'path'
 import { FILE_SIZE_THRESHOLD, FileTempDir, getContentType, getDefaultFilename, getFileType } from '../util/file-helper'
 import fs from 'fs-extra'
-import uuid from 'uuid'
+import { v4 as uuidV4 } from 'uuid'
+import { VoiceMessage } from '../schema/request'
+import { VideoMessage } from '../schema/request'
+import { FileMessage } from '../schema/request'
+import FormData from 'form-data'
 
 export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEvents>) {
   private readonly logger = new Logger(Manager.name)
@@ -255,29 +259,76 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
     const localPath = path.join(
       FileTempDir,
-      uuid.v4(),
+      uuidV4(),
     )
 
     await file.toFile(localPath, true)
     const localFile = FileBox.fromFile(localPath, filename)
 
-    await axios.post(`${baseUrl}/media/upload`, {
-      filename: filename || getDefaultFilename(fileType),
-      filelength: localFile.size,
-      'Content-Type': getContentType(type),
-      media: await file.toStream()
-    }, {
+    const formData = new FormData()
+    formData.append('filename', filename || getDefaultFilename(fileType))
+    // formData.append('filelength', localFile.size)
+    // formData.append('Content-Type', getContentType(type))
+    formData.append('media', await localFile.toStream())
+
+    const headers = formData.getHeaders()
+
+    const response = await axios.post<UploadMediaRequest, AxiosResponse<UploadMediaResponse>>(`${baseUrl}/media/upload`, formData, {
       params: {
-        access_token: await this.getAccessToken(),
+        access_token: this.accessToken,
         type: fileType,
       },
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      }
+      headers,
     })
 
     fs.rmSync(localPath)
     
+    return {
+      mediaId: response.data.media_id,
+      type: fileType
+    }
+  }
+
+  async messageSendFile(toId: string, file: FileBox) {
+    const { mediaId, type } = await this.uploadMedia(file)
+    this.logger.info(`sending ${type} id: ${mediaId} to ${toId}`)
+
+    const data = {
+      touser: toId,
+      open_kfid: this.authData.kfOpenId,
+    } as SendMessageRequest<FileMessageTypes>
+    
+    switch (type) {
+      case FileTypes.IMAGE:
+        data.msgtype = MsgType.MSG_TYPE_IMAGE
+        ;(data as SendMessageRequest<ImageMessage>).image = {
+          media_id: mediaId
+        }
+        break
+      case FileTypes.VIDEO:
+        data.msgtype = MsgType.MSG_TYPE_VIDEO
+        ;(data as SendMessageRequest<VideoMessage>).video = {
+          media_id: mediaId
+        }
+        break
+      case FileTypes.VOICE:
+        data.msgtype = MsgType.MSG_TYPE_VOICE
+        ;(data as SendMessageRequest<VoiceMessage>).voice = {
+          media_id: mediaId
+        }
+        break
+      case FileTypes.FILE:
+      default:
+        data.msgtype = MsgType.MSG_TYPE_FILE
+        ;(data as SendMessageRequest<FileMessage>).file = {
+          media_id: mediaId
+        }
+        break
+    }
+    
+    const response = await this.request(RequestTypes.SEND_MESSAGE, data)
+
+    return response.msgid
   }
 
   async contactPayload(contactId: string) {
