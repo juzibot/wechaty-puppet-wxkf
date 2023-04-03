@@ -64,6 +64,30 @@ export class PuppetWxkf extends Puppet {
     return this.manager.messageFile(messageId)
   }
 
+  override messageUrl(messageId: string): Promise<payloads.UrlLink> {
+    return this.manager.messageUrl(messageId)
+  }
+
+  override messageLocation(messageId: string): Promise<payloads.Location> {
+    return this.manager.messageLocation(messageId)
+  }
+
+  override messageContact(messageId: string): Promise<string> {
+    return this.manager.messageContact(messageId)
+  }
+
+  override messageMiniProgram(messageId: string): Promise<payloads.MiniProgram> {
+    return this.manager.messageMiniProgram(messageId)
+  }
+
+  override contactList(): Promise<string[]> {
+    return Promise.resolve([])
+  }
+
+  override roomList(): Promise<string[]> {
+    return Promise.resolve([])
+  }
+
   override contactRawPayload(contactId: string): Promise<ContactPayloadCache> {
     return this.manager.contactPayload(contactId)
   }

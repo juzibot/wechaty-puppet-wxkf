@@ -18,4 +18,5 @@ export const MessageTypesWithFile = [
   types.Message.Image,
   types.Message.Video,
   types.Message.Audio,
+  types.Message.MiniProgram,
 ]

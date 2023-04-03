@@ -8,7 +8,7 @@ import { baseUrl, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapp
 import WxkfError from '../error/error'
 import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
 import { FileMessageTypes, FileTypes, GetAccessTokenRequest, GetAccessTokenResponse, GetKfAccountListRequest, ImageMessage, MessageTypes, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage } from '../schema/request'
-import { Logger } from '../wechaty-dep'
+import { Logger, types } from '../wechaty-dep'
 import { CacheService } from './cache'
 import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
 import { ManagerEvents } from '../schema/event'
@@ -467,6 +467,71 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     await this.cacheService.setMessage(message.id, message)
 
     return localFile
+  }
+
+  async messageMiniProgram(messageId: string) {
+    const message = await this.cacheService.getMessage(messageId)
+
+    if (!message) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `cannot find message for id: ${messageId}`)
+    }
+
+    if (message.type !== types.Message.MiniProgram) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `message does not contain mini program, id: ${messageId}`)
+    }
+
+    const payload = message.miniProgramPayload
+    if (!payload.thumbUrl && getOss().type) {
+      const file = this.messageFile(messageId)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const url = (file as any).remoteUrl as string
+      payload.thumbUrl = url
+      await this.cacheService.setMessage(messageId, message)
+    }
+
+    return payload
+  }
+
+  async messageUrl(messageId: string) {
+    const message = await this.cacheService.getMessage(messageId)
+
+    if (!message) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `cannot find message for id: ${messageId}`)
+    }
+
+    if (message.type !== types.Message.Url) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `message does not contain url link, id: ${messageId}`)
+    }
+
+    return message.urlPayload
+  }
+
+  async messageLocation(messageId: string) {
+    const message = await this.cacheService.getMessage(messageId)
+
+    if (!message) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `cannot find message for id: ${messageId}`)
+    }
+
+    if (message.type !== types.Message.Location) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `message does not contain location, id: ${messageId}`)
+    }
+
+    return message.locationPayload
+  }
+
+  async messageContact(messageId: string) {
+    const message = await this.cacheService.getMessage(messageId)
+
+    if (!message) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `cannot find message for id: ${messageId}`)
+    }
+
+    if (message.type !== types.Message.Contact) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `message does not contain contact, id: ${messageId}`)
+    }
+
+    return message.contactId
   }
 
   async contactPayload(contactId: string) {
