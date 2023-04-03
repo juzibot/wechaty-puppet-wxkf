@@ -5,7 +5,7 @@ import { FileTypes } from './request'
 export type MessagePayloadCache = payloads.Message & {
   mediaId?: string
   mediaPath?: string,
-  mediaOssPath?: string,
+  mediaOssUrl?: string,
   urlPayload?: payloads.UrlLink,
   contactId?: string,
   miniProgramPayload?: payloads.MiniProgram,

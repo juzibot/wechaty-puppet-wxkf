@@ -25,6 +25,7 @@ import { VoiceMessage } from '../schema/request'
 import { VideoMessage } from '../schema/request'
 import { FileMessage } from '../schema/request'
 import FormData from 'form-data'
+import { Readable } from 'node:stream'
 
 export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEvents>) {
   private readonly logger = new Logger(Manager.name)
@@ -85,6 +86,8 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     this.emit('ready', {
       data: 'data ready'
     })
+
+    await this.downloadMedia('30_inERWhteLjxtj0lGphr9RLmKY1FmrbW-c9uJxx45WqM8QWBj2ghYQmfpsYRiwv')
   }
 
   async onStop() {
@@ -344,6 +347,37 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       mediaId: response.data.media_id,
       type: fileType
     }
+  }
+
+  private async downloadMedia(mediaId: string) {
+    const response = await axios.get(`${baseUrl}/media/get`, {
+      params: {
+        access_token: this.accessToken,
+        media_id: mediaId,
+      },
+      responseType: 'stream'
+    })
+    const disposition = response.headers['content-disposition'] as string
+    const matchResult = disposition.match(/filename="(.*?)"/)
+    let filename: string
+    if (matchResult) {
+      filename = matchResult[1]
+    } else {
+      const mimeType = response.headers['content-type'] as string
+      const fileType = getFileType(mimeType)
+      filename = getDefaultFilename(fileType)
+    }
+
+    const localPath = path.join(
+      FileTempDir,
+      uuidV4(),
+    )
+
+    const file = FileBox.fromStream(response.data as Readable)
+    await file.toFile(localPath, true)
+    const localFile = FileBox.fromFile(localPath, filename)
+    
+    return localFile
   }
 
   async messageSendFile(toId: string, file: FileBox) {
