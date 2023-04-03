@@ -40,7 +40,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
   private readonly ossService: ObjectStorageService
 
   private accessToken?: string
-  private accessTokenExpireTime?: number
+  // private accessTokenExpireTime?: number
   private accessTokenTimestamp?: number
   private accessTokenRenewTimer: NodeJS.Timeout
 
@@ -111,7 +111,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       })
   
       this.accessToken = response.data.access_token
-      this.accessTokenExpireTime = Date.now() + response.data.expires_in * 1000
+      // this.accessTokenExpireTime = Date.now() + response.data.expires_in * 1000
       this.accessTokenTimestamp = Date.now()
 
       if (this.accessTokenRenewTimer) {

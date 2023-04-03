@@ -59,7 +59,7 @@ export class CosClient {
       Body: body,
       onProgress: function(progressData) {
         if (progressData.percent && progressData.percent - lastUploadProgress > 30) {
-          that.logger.log(`uploading file ${ossPath} to COS, progress: ${JSON.stringify(progressData)}`)
+          that.logger.info(`uploading file ${ossPath} to COS, progress: ${JSON.stringify(progressData)}`)
           lastUploadProgress = progressData.percent
         }
       }

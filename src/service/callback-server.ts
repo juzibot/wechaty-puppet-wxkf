@@ -70,6 +70,7 @@ export class CallbackServer extends (EventEmitter as new () => TypedEmitter<Call
     }
     
     const { message, id, random } = crypto.decrypt(this.authData.encodingAESKey, encryptedStr)
+    void id, random
     
     const messageObject = await xml2js.parseStringPromise(message) as EventXmlData
 
