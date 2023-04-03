@@ -76,6 +76,25 @@ export enum MsgType {
   MSG_TYPE_SCHEDULE = 'schedule',
 }
 
+export const MsgTypeChineseName = {
+  [MsgType.MSG_TYPE_TEXT]: '文本',
+  [MsgType.MSG_TYPE_IMAGE]: '图片',
+  [MsgType.MSG_TYPE_VOICE]: '语音',
+  [MsgType.MSG_TYPE_VIDEO]: '视频',
+  [MsgType.MSG_TYPE_FILE]: '文件',
+  [MsgType.MSG_TYPE_LOCATION]: '位置',
+  [MsgType.MSG_TYPE_LINK]: '图文链接',
+  [MsgType.MSG_TYPE_BUSINESS_CARD]: '名片',
+  [MsgType.MSG_TYPE_MINIPROGRAM]: '小程序',
+  [MsgType.MSG_TYPE_CHANNEL]: '视频号',
+  [MsgType.MSG_TYPE_MENU]: '菜单',
+  [MsgType.MSG_TYPE_CHANNEL_PRODUCT]: '视频号商品',
+  [MsgType.MSG_TYPE_CHANNEL_ORDER]: '视频号订单',
+  [MsgType.MSG_TYPE_CHAT_HISTORY]: '合并的聊天记录',
+  [MsgType.MSG_TYPE_MEETING]: '会议',
+  [MsgType.MSG_TYPE_SCHEDULE]: '日程',
+}
+
 export type MessageTypes = 
   | TextMessage
   | ImageMessage

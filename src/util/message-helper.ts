@@ -1,5 +1,5 @@
 import { types } from '../wechaty-dep'
-import { WxkfMessage, MessageTypes, MsgType } from '../schema/request'
+import { WxkfMessage, MessageTypes, MsgType, MsgTypeChineseName } from '../schema/request'
 import { timestampToMilliseconds } from './time'
 import { MessagePayloadCache } from '../schema/cache'
 
@@ -63,7 +63,9 @@ export const convertMessageToPayload = (rawMessage: WxkfMessage<MessageTypes>) =
       messagePayload.mediaId = rawMessage.miniprogram.thumb_media_id
       break
     default:
-      return null
+      messagePayload.type = types.Message.Text
+      messagePayload.text = `收到一条【${MsgTypeChineseName[rawMessage.msgtype] || rawMessage.msgtype}】消息，此消息类型暂不支持显示。`
+      break
   }
 
   return messagePayload
