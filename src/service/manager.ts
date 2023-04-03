@@ -7,8 +7,8 @@ import { ExecQueueService } from './exec-queue'
 import { baseUrl, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
 import WxkfError from '../error/error'
 import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
-import { FileMessageTypes, FileTypes, GetAccessTokenRequest, GetAccessTokenResponse, GetKfAccountListRequest, ImageMessage, MessageTypes, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage } from '../schema/request'
-import { Logger, types } from '../wechaty-dep'
+import { FileMessageTypes, FileTypes, GetAccessTokenRequest, GetAccessTokenResponse, GetKfAccountListRequest, ImageMessage, MessageTypes, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage } from '../schema/request'
+import { Logger, payloads, types } from '../wechaty-dep'
 import { CacheService } from './cache'
 import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
 import { ManagerEvents } from '../schema/event'
@@ -418,6 +418,26 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
         break
     }
     
+    const response = await this.request(RequestTypes.SEND_MESSAGE, data)
+
+    return response.msgid
+  }
+
+  async messageSendMiniProgram(toId: string, payload: payloads.MiniProgram) {
+    const { mediaId } = await this.uploadMedia(FileBox.fromUrl(payload.thumbUrl))
+
+    const data: SendMessageRequest<MiniProgramMessage> = {
+      touser: toId,
+      open_kfid: this.authData.kfOpenId,
+      msgtype: MsgType.MSG_TYPE_MINIPROGRAM,
+      miniprogram: {
+        appid: payload.appid,
+        title: payload.title,
+        pagepath: payload.pagePath,
+        thumb_media_id: mediaId,
+      }
+    }
+
     const response = await this.request(RequestTypes.SEND_MESSAGE, data)
 
     return response.msgid

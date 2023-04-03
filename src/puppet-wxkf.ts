@@ -55,6 +55,10 @@ export class PuppetWxkf extends Puppet {
     return this.manager.messageSendFile(conversationId, file)
   }
 
+  override messageSendMiniProgram(conversationId: string, miniProgramPayload: payloads.MiniProgram): Promise<string | void> {
+    return this.manager.messageSendMiniProgram(conversationId, miniProgramPayload)
+  }
+
   override messageImage(messageId: string, imageType: Image): Promise<FileBox> {
     void imageType
     return this.manager.messageFile(messageId)
