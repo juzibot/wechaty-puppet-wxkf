@@ -52,7 +52,7 @@ export const getDefaultFilename = (fileType: FileTypes) => {
 }
 
 export const getContentType = (type: string) => {
-  if (type.includes('/')) return true
+  if (type.includes('/')) return type
 
   if (isImage(type)) {
     return `image/${type}`
