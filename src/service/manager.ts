@@ -16,9 +16,9 @@ import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'node:events'
 import { convertMessageToPayload } from '../util/message-helper'
 import { convertContactToPayload } from '../util/contact-helper'
-import { FileBox } from '../filebox-dep'
+import { FileBox, FileBoxType } from '../filebox-dep'
 import path from 'path'
-import { FILE_SIZE_THRESHOLD, FileTempDir, getContentType, getDefaultFilename, getFileType } from '../util/file-helper'
+import { FILE_SIZE_THRESHOLD, FileTempDir, getContentType, getDefaultFilename, getFileType, getMd5 } from '../util/file-helper'
 import fs from 'fs-extra'
 import { v4 as uuidV4 } from 'uuid'
 import { VoiceMessage } from '../schema/request'
@@ -244,6 +244,32 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   private async uploadMedia(file: FileBox) {
     await file.ready()
+    if (file.type === FileBoxType.Url) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const url = (file as any).remoteUrl as string
+      const mediaInfo = await this.cacheService.getMedia(url)
+      if (mediaInfo) {
+        this.logger.info(`got ${mediaInfo.type} from url cache: ${mediaInfo.mediaId}`)
+
+        return {
+          mediaId: mediaInfo.mediaId,
+          type: mediaInfo.type
+        }
+      }
+    }
+    
+    if (file.md5) {
+      const mediaInfo = await this.cacheService.getMedia(file.md5)
+      if (mediaInfo) {
+        this.logger.info(`got ${mediaInfo.type} from metadata md5 cache: ${mediaInfo.mediaId}`)
+
+        return {
+          mediaId: mediaInfo.mediaId,
+          type: mediaInfo.type
+        }
+      }
+    }
+
     const type =
       file.mediaType && file.mediaType !== 'application/octet-stream' && file.mediaType !== 'application/unknown'
         ? file.mediaType.replace(/;.*$/, '')
@@ -264,6 +290,19 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
     await file.toFile(localPath, true)
     const localFile = FileBox.fromFile(localPath, filename)
+    const md5 = await getMd5(localFile)
+    console.log(md5)
+
+    const mediaInfo = await this.cacheService.getMedia(md5)
+    if (mediaInfo) {
+      fs.rmSync(localPath)
+
+      this.logger.info(`got ${mediaInfo.type} from calculated md5 cache: ${mediaInfo.mediaId}`)
+      return {
+        mediaId: mediaInfo.mediaId,
+        type: mediaInfo.type
+      }
+    }
 
     const formData = new FormData()
     formData.append('media', await localFile.toStream(), {
@@ -284,6 +323,23 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
     fs.rmSync(localPath)
     
+    await this.cacheService.setMedia(md5, {
+      mediaId: response.data.media_id,
+      type: fileType,
+      createdAt: timestampToMilliseconds(Number(response.data.created_at) || Date.now()),
+    })
+    if (file.type === FileBoxType.Url) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const url = (file as any).remoteUrl as string
+      await this.cacheService.setMedia(url, {
+        mediaId: response.data.media_id,
+        type: fileType,
+        createdAt: timestampToMilliseconds(Number(response.data.created_at) || Date.now()),
+      })
+    }
+
+    this.logger.info(`new ${fileType} uploaded: ${response.data.media_id}`)
+
     return {
       mediaId: response.data.media_id,
       type: fileType

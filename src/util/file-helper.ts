@@ -2,6 +2,8 @@ import { FileTypes } from '../schema/request'
 import os from 'os'
 import path from 'path'
 import { v4 as uuidV4 } from 'uuid'
+import crypto from 'crypto'
+import { FileBox } from '../filebox-dep'
 
 const MB = 1024 * 1024
 
@@ -64,4 +66,13 @@ export const getContentType = (type: string) => {
     return 'audio/amr'
   }
   return `application/${type}`
+}
+
+export async function getMd5(fileBox: FileBox): Promise<string> {
+  const buffer = await fileBox.toBuffer()
+  const hash = crypto.createHash('md5')
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  hash.update(buffer as any, 'utf8')
+  const md5 = hash.digest('hex')
+  return md5
 }
