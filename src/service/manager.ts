@@ -1,5 +1,5 @@
-import { PuppetWxkfOptions, WxkfAuth } from '../schema/base'
-import { getAuthData, getPort } from '../util/env'
+import { MessageTypesWithFile, PuppetWxkfOptions, WxkfAuth } from '../schema/base'
+import { getAuthData, getOss, getPort } from '../util/env'
 import { CallbackServer } from './callback-server'
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
 import { MINUTE, SECOND, timestampToMilliseconds } from '../util/time'
@@ -26,6 +26,7 @@ import { VideoMessage } from '../schema/request'
 import { FileMessage } from '../schema/request'
 import FormData from 'form-data'
 import { Readable } from 'node:stream'
+import { MEDIA_EXPIRE_THRESHOLD } from '../schema/cache'
 
 export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEvents>) {
   private readonly logger = new Logger(Manager.name)
@@ -420,6 +421,52 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     const response = await this.request(RequestTypes.SEND_MESSAGE, data)
 
     return response.msgid
+  }
+
+  async messageFile(messageId: string) {
+    const message = await this.cacheService.getMessage(messageId)
+
+    if (!message) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `cannot find message for id: ${messageId}`)
+    }
+
+    if (!MessageTypesWithFile.includes(message.type)) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `message does not contain any file, id: ${messageId}`)
+    }
+
+    if (message.mediaOssUrl) {
+      return FileBox.fromUrl(message.mediaOssUrl, {
+        name: message.filename
+      })
+    }
+
+    if (message.mediaPath) {
+      if (fs.existsSync(message.mediaPath)) {
+        return FileBox.fromFile(message.mediaPath, message.filename)
+      }
+    }
+
+    if (message.timestamp + MEDIA_EXPIRE_THRESHOLD < Date.now()) {
+      throw new WxkfError(WXKF_ERROR.MESSAGE_PARSE_ERROR, `cannot download file for message id: ${messageId}, the file has expired`)
+    }
+
+    const localFile = await this.downloadMedia(message.mediaId)
+    message.filename = localFile.name
+    
+    if (getOss().type) {
+      const url = '' // upload to OSS
+      message.mediaOssUrl = url
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      fs.rmSync((localFile as any).localPath as string)
+      await this.cacheService.setMessage(message.id, message)
+      return FileBox.fromUrl(url)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    message.mediaPath = (localFile as any).localPath as string
+    await this.cacheService.setMessage(message.id, message)
+
+    return localFile
   }
 
   async contactPayload(contactId: string) {

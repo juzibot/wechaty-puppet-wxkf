@@ -1,3 +1,4 @@
+import { Image } from 'wechaty-puppet/types'
 import { FileBox } from './filebox-dep'
 import { PuppetWxkfOptions } from './schema/base'
 import { ContactPayloadCache } from './schema/cache'
@@ -52,6 +53,15 @@ export class PuppetWxkf extends Puppet {
 
   override messageSendFile(conversationId: string, file: FileBox): Promise<string | void> {
     return this.manager.messageSendFile(conversationId, file)
+  }
+
+  override messageImage(messageId: string, imageType: Image): Promise<FileBox> {
+    void imageType
+    return this.manager.messageFile(messageId)
+  }
+
+  override messageFile(messageId: string): Promise<FileBox> {
+    return this.manager.messageFile(messageId)
   }
 
   override contactRawPayload(contactId: string): Promise<ContactPayloadCache> {

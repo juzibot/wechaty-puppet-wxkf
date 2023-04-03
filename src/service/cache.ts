@@ -3,7 +3,7 @@ import fs from 'fs-extra'
 import os from 'os'
 
 import { FlashStore } from 'flash-store'
-import { ContactPayloadCache, MediaExpireThreshold, MediaIdCache, MessagePayloadCache } from '../schema/cache'
+import { ContactPayloadCache, MEDIA_EXPIRE_THRESHOLD, MediaIdCache, MessagePayloadCache } from '../schema/cache'
 
 
 export class CacheService {
@@ -86,7 +86,7 @@ export class CacheService {
 
   async getMedia(key: string) {
     const media = await this.caches.media.get(key)
-    if (!media || (media.createdAt + MediaExpireThreshold < Date.now())) {
+    if (!media || (media.createdAt + MEDIA_EXPIRE_THRESHOLD < Date.now())) {
       return null
     }
     return media

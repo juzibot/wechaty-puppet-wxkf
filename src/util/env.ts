@@ -31,3 +31,9 @@ export const getPort = (portOption: string) => {
   const port = Number(portOption || process.env['WXKF_CALLBACK_PORT']) || 3000
   return port
 }
+
+export const getOss = () => {
+  return {
+    type: process.env['OSS_TYPE']
+  }
+}

@@ -1,4 +1,4 @@
-import { PuppetOptions } from '../wechaty-dep'
+import { PuppetOptions, types } from '../wechaty-dep'
 
 export interface PuppetWxkfOptions extends PuppetOptions {
   callbackPort?: string,
@@ -12,3 +12,10 @@ export interface WxkfAuth {
   corpSecret?: string, // 企微客服应用的secret
   kfOpenId?: string, // 企微客服openId
 }
+
+export const MessageTypesWithFile = [
+  types.Message.Attachment,
+  types.Message.Image,
+  types.Message.Video,
+  types.Message.Audio,
+]

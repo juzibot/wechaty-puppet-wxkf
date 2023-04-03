@@ -6,6 +6,7 @@ export type MessagePayloadCache = payloads.Message & {
   mediaId?: string
   mediaPath?: string,
   mediaOssUrl?: string,
+  filename?: string,
   urlPayload?: payloads.UrlLink,
   contactId?: string,
   miniProgramPayload?: payloads.MiniProgram,
@@ -26,4 +27,4 @@ export interface MediaIdCache {
   type: FileTypes,
 }
 
-export const MediaExpireThreshold = 3 * DAY
+export const MEDIA_EXPIRE_THRESHOLD = 3 * DAY
