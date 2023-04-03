@@ -1,4 +1,4 @@
-import { MessageTypesWithFile, PuppetWxkfOptions, WxkfAuth } from '../schema/base'
+import { MessageTypesWithFile, PuppetWxkfOptions, WXKF_AUTH_TYPE, WxkfAuth } from '../schema/base'
 import { getAuthData, getPort } from '../util/env'
 import { CallbackServer } from './callback-server'
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
@@ -7,7 +7,7 @@ import { ExecQueueService } from './exec-queue'
 import { baseUrl, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
 import WxkfError from '../error/error'
 import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
-import { FileMessageTypes, FileTypes, GetAccessTokenRequest, GetAccessTokenResponse, GetKfAccountListRequest, ImageMessage, LinkMessage, LocationMessage, MessageTypes, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage } from '../schema/request'
+import { DownloadMediaRequest, DownloadMediaResponse, FileMessageTypes, FileTypes, GetFWSDKFAccessTokenRequest, GetFWSDKFAccessTokenResponse, GetKfAccountListRequest, GetZJYYAccessTokenRequest, GetZJYYAccessTokenResponse, ImageMessage, LinkMessage, LocationMessage, MessageTypes, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage } from '../schema/request'
 import { Logger, payloads, types } from '../wechaty-dep'
 import { CacheService } from './cache'
 import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
@@ -25,7 +25,6 @@ import { VoiceMessage } from '../schema/request'
 import { VideoMessage } from '../schema/request'
 import { FileMessage } from '../schema/request'
 import FormData from 'form-data'
-import { Readable } from 'node:stream'
 import { MEDIA_EXPIRE_THRESHOLD } from '../schema/cache'
 import { ObjectStorageService } from './oss'
 
@@ -102,15 +101,29 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       if (Date.now() - this.accessTokenTimestamp < 10 * MINUTE && this.accessToken) {
         return
       }
-  
-      const response = await axios.get<GetAccessTokenRequest, AxiosResponse<GetAccessTokenResponse>>(`${baseUrl}${urlMapping[RequestTypes.GET_ACCESS_TOKEN]}`, {
-        params: {
-          corpid: this.authData.corpId,
-          corpsecret: this.authData.corpSecret
+      if (this.authData.authType === WXKF_AUTH_TYPE.ZJYY) {
+        const response = await axios.get<GetZJYYAccessTokenResponse, AxiosResponse<GetZJYYAccessTokenResponse>, GetZJYYAccessTokenRequest>(`${baseUrl}${urlMapping[RequestTypes.GET_ZJYY_ACCESS_TOKEN]}`, {
+          params: {
+            corpid: this.authData.corpId,
+            corpsecret: this.authData.corpSecret
+          }
+        })
+        if (response.data.errcode) {
+          throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot get access token for code: ${response.data.errcode}, message: ${response.data.errmsg}`)
         }
-      })
+        this.accessToken = response.data.access_token
+      }
+      if (this.authData.authType === WXKF_AUTH_TYPE.FWSDKF) {
+        const response = await axios.post<GetFWSDKFAccessTokenResponse, AxiosResponse<GetFWSDKFAccessTokenResponse>, GetFWSDKFAccessTokenRequest>(`${baseUrl}${urlMapping[RequestTypes.GET_FWSDKF_ACCESS_TOKEN]}`, {
+          corpid: this.authData.providerCorpId,
+          provider_secret: this.authData.providerSecret
+        })
+        if (response.data.errcode) {
+          throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot get access token for code: ${response.data.errcode}, message: ${response.data.errmsg}`)
+        }
+        this.accessToken = response.data.provider_access_token
+      }
   
-      this.accessToken = response.data.access_token
       // this.accessTokenExpireTime = Date.now() + response.data.expires_in * 1000
       this.accessTokenTimestamp = Date.now()
 
@@ -129,7 +142,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   private async request<T extends RequestTypes>(type: T, data: RequestTypeMapping[T]):Promise<ResponseTypeMapping[T]> {
     this.logger.info(`request(${RequestTypes[type]}, ${JSON.stringify(data)})`)
-    const response = await this.postRequestInstance.post<RequestTypeMapping[T], AxiosResponse<ResponseTypeMapping[T]>>(urlMapping[type], data)
+    const response = await this.postRequestInstance.post<ResponseTypeMapping[T], AxiosResponse<ResponseTypeMapping[T]>, RequestTypeMapping[T]>(urlMapping[type], data)
 
     const responseData = response.data
     if (responseData.errcode) {
@@ -264,7 +277,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     }
     
     if (file.md5) {
-      const mediaInfo = await this.cacheService.getMedia(file.md5)
+      const mediaInfo = await this.cacheService.getMedia(file.md5 as string) // why this as is needed?
       if (mediaInfo) {
         this.logger.info(`got ${mediaInfo.type} from metadata md5 cache: ${mediaInfo.mediaId}`)
 
@@ -318,7 +331,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
     const headers = formData.getHeaders()
 
-    const response = await axios.post<UploadMediaRequest, AxiosResponse<UploadMediaResponse>>(`${baseUrl}/media/upload`, formData, {
+    const response = await axios.post<UploadMediaResponse, AxiosResponse<UploadMediaResponse>, UploadMediaRequest>(`${baseUrl}/media/upload`, formData, {
       params: {
         access_token: this.accessToken,
         type: fileType,
@@ -352,7 +365,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
   }
 
   private async downloadMedia(mediaId: string) {
-    const response = await axios.get(`${baseUrl}/media/get`, {
+    const response = await axios.get<DownloadMediaResponse, AxiosResponse<DownloadMediaResponse>, DownloadMediaRequest>(`${baseUrl}/media/get`, {
       params: {
         access_token: this.accessToken,
         media_id: mediaId,
@@ -375,7 +388,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       uuidV4(),
     )
 
-    const file = FileBox.fromStream(response.data as Readable)
+    const file = FileBox.fromStream(response.data )
     await file.toFile(localPath, true)
     const localFile = FileBox.fromFile(localPath, filename)
     

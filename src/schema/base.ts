@@ -19,6 +19,8 @@ export interface WxkfAuthZjyy {
 export interface WxkfAuthFwsdkf {
   authType?: WXKF_AUTH_TYPE.FWSDKF,
   kfOpenId?: string, // 企微客服openId
+  providerSecret?: string, // 服务商的secret，在服务商管理后台可见
+  providerCorpId?: string, // 服务商的corpid
 }
 
 export const MessageTypesWithFile = [

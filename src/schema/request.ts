@@ -1,15 +1,28 @@
+import FormData from 'form-data'
+import stream from 'stream'
+
 export interface ResponseBase {
   errcode: number, // 返回码
   errmsg: string, // 错误码描述
 }
 
-export interface GetAccessTokenRequest {
+export interface GetZJYYAccessTokenRequest {
   corpid: string,
   corpsecret: string,
 }
 
-export interface GetAccessTokenResponse extends ResponseBase {
+export interface GetZJYYAccessTokenResponse extends ResponseBase {
   access_token?: string,
+  expires_in?: number
+}
+
+export interface GetFWSDKFAccessTokenRequest {
+  corpid: string,
+  provider_secret: string,
+}
+
+export interface GetFWSDKFAccessTokenResponse extends ResponseBase {
+  provider_access_token?: string,
   expires_in?: number
 }
 
@@ -268,10 +281,12 @@ export enum Gender {
   Female = 2,
 }
 
-export interface UploadMediaRequest {
-  filename: string,
-  filelength: number,
-  'content-type': string
+export type UploadMediaRequest = FormData
+
+export interface UploadMediaResponse extends ResponseBase {
+  type: FileTypes
+  media_id: string
+  created_at: string
 }
 
 export enum FileTypes {
@@ -281,10 +296,11 @@ export enum FileTypes {
   FILE = 'file',
 }
 
-export interface UploadMediaResponse extends ResponseBase {
-  type: FileTypes
-  media_id: string
-  created_at: string
+export interface DownloadMediaRequest {
+  access_token: string,
+  media_id: string,
 }
+
+export type DownloadMediaResponse = stream.Readable
 
 export type FileMessageTypes = ImageMessage | VoiceMessage | VideoMessage | FileMessage

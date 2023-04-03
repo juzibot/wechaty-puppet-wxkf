@@ -36,9 +36,13 @@ export const getAuthData = (rawOptions: WxkfAuth = {}) => {
     case WXKF_AUTH_TYPE.FWSDKF: {
       const options = rawOptions as WxkfAuthFwsdkf
       const kfOpenId = options.kfOpenId || process.env['WECOM_KF_OPEN_ID']
+      const providerSecret = options.providerSecret || process.env['WECOM_FWSDKF_PROVIDER_SECRET']
+      const providerCorpId = options.providerCorpId || process.env['WECOM_FWSDKF_PROVIDER_CORP_ID']
       const result: WxkfAuthFwsdkf = {
         kfOpenId,
         authType,
+        providerSecret,
+        providerCorpId,
       }
       for (const key in result) {
         if (!result[key]) {
