@@ -266,10 +266,11 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     const localFile = FileBox.fromFile(localPath, filename)
 
     const formData = new FormData()
-    formData.append('filename', filename || getDefaultFilename(fileType))
-    formData.append('filelength', localFile.size.toString())
-    formData.append('Content-Type', getContentType(type))
-    formData.append('media', await localFile.toStream())
+    formData.append('media', await localFile.toStream(), {
+      filename: filename || getDefaultFilename(fileType),
+      knownLength: localFile.size,
+      contentType: getContentType(type)
+    })
 
     const headers = formData.getHeaders()
 
