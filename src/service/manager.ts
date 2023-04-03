@@ -7,7 +7,7 @@ import { ExecQueueService } from './exec-queue'
 import { baseUrl, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
 import WxkfError from '../error/error'
 import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
-import { FileMessageTypes, FileTypes, GetAccessTokenRequest, GetAccessTokenResponse, GetKfAccountListRequest, ImageMessage, MessageTypes, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage } from '../schema/request'
+import { FileMessageTypes, FileTypes, GetAccessTokenRequest, GetAccessTokenResponse, GetKfAccountListRequest, ImageMessage, LinkMessage, LocationMessage, MessageTypes, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage } from '../schema/request'
 import { Logger, payloads, types } from '../wechaty-dep'
 import { CacheService } from './cache'
 import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
@@ -435,6 +435,43 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
         title: payload.title,
         pagepath: payload.pagePath,
         thumb_media_id: mediaId,
+      }
+    }
+
+    const response = await this.request(RequestTypes.SEND_MESSAGE, data)
+
+    return response.msgid
+  }
+
+
+  async messageSendUrl(toId: string, payload: payloads.UrlLink) {
+    const data: SendMessageRequest<LinkMessage> = {
+      touser: toId,
+      open_kfid: this.authData.kfOpenId,
+      msgtype: MsgType.MSG_TYPE_LINK,
+      link: {
+        title: payload.title,
+        desc: payload.description,
+        url: payload.url,
+        pic_url: payload.thumbnailUrl,
+      }
+    }
+
+    const response = await this.request(RequestTypes.SEND_MESSAGE, data)
+
+    return response.msgid
+  }
+
+  async messageSendLocation(toId: string, payload: payloads.Location) {
+    const data: SendMessageRequest<LocationMessage> = {
+      touser: toId,
+      open_kfid: this.authData.kfOpenId,
+      msgtype: MsgType.MSG_TYPE_LOCATION,
+      location: {
+        latitude: payload.latitude,
+        longitude: payload.longitude,
+        name: payload.name,
+        address: payload.address,
       }
     }
 

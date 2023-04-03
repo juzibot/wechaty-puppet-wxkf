@@ -59,6 +59,14 @@ export class PuppetWxkf extends Puppet {
     return this.manager.messageSendMiniProgram(conversationId, miniProgramPayload)
   }
 
+  override messageSendUrl(conversationId: string, urlLinkPayload: payloads.UrlLink): Promise<string | void> {
+    return this.manager.messageSendUrl(conversationId, urlLinkPayload)
+  }
+
+  override messageSendLocation(conversationId: string, locationPayload: payloads.Location): Promise<string | void> {
+    return this.manager.messageSendLocation(conversationId, locationPayload)
+  }
+
   override messageImage(messageId: string, imageType: Image): Promise<FileBox> {
     void imageType
     return this.manager.messageFile(messageId)
