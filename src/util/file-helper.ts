@@ -4,6 +4,8 @@ import path from 'path'
 import { v4 as uuidV4 } from 'uuid'
 import crypto from 'crypto'
 import { FileBox } from '../filebox-dep'
+import { types } from '../wechaty-dep'
+import { UPLOAD_TYPE } from '../service/oss/interface'
 
 const MB = 1024 * 1024
 
@@ -75,4 +77,18 @@ export async function getMd5(fileBox: FileBox): Promise<string> {
   hash.update(buffer as any, 'utf8')
   const md5 = hash.digest('hex')
   return md5
+}
+
+export const getUploadType = (type: types.Message) => {
+  switch (type) {
+    case types.Message.Image:
+      return UPLOAD_TYPE.IMAGE_MSG
+    case types.Message.Url:
+    case types.Message.MiniProgram:
+      return UPLOAD_TYPE.LINK_MSG
+    case types.Message.Video:
+      return UPLOAD_TYPE.VIDEO_MSG
+    default:
+      return UPLOAD_TYPE.FILE_MSG
+  }
 }

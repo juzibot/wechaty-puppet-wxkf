@@ -1,5 +1,5 @@
 import { MessageTypesWithFile, PuppetWxkfOptions, WxkfAuth } from '../schema/base'
-import { getAuthData, getOss, getPort } from '../util/env'
+import { getAuthData, getPort } from '../util/env'
 import { CallbackServer } from './callback-server'
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
 import { MINUTE, SECOND, timestampToMilliseconds } from '../util/time'
@@ -18,7 +18,7 @@ import { convertMessageToPayload } from '../util/message-helper'
 import { convertContactToPayload } from '../util/contact-helper'
 import { FileBox, FileBoxType } from '../filebox-dep'
 import path from 'path'
-import { FILE_SIZE_THRESHOLD, FileTempDir, getContentType, getDefaultFilename, getFileType, getMd5 } from '../util/file-helper'
+import { FILE_SIZE_THRESHOLD, FileTempDir, getContentType, getDefaultFilename, getFileType, getMd5, getUploadType } from '../util/file-helper'
 import fs from 'fs-extra'
 import { v4 as uuidV4 } from 'uuid'
 import { VoiceMessage } from '../schema/request'
@@ -27,6 +27,7 @@ import { FileMessage } from '../schema/request'
 import FormData from 'form-data'
 import { Readable } from 'node:stream'
 import { MEDIA_EXPIRE_THRESHOLD } from '../schema/cache'
+import { ObjectStorageService } from './oss'
 
 export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEvents>) {
   private readonly logger = new Logger(Manager.name)
@@ -36,6 +37,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   private readonly postRequestInstance: AxiosInstance
   private readonly cacheService: CacheService
+  private readonly ossService: ObjectStorageService
 
   private accessToken?: string
   private accessTokenExpireTime?: number
@@ -52,6 +54,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     this.callbackServer.on('message', this.messageHandler.bind(this) as typeof this.messageHandler)
 
     this.cacheService = new CacheService(this.authData.kfOpenId)
+    this.ossService = new ObjectStorageService()
 
     this.postRequestInstance = axios.create({
       baseURL: baseUrl,
@@ -87,8 +90,6 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     this.emit('ready', {
       data: 'data ready'
     })
-
-    await this.downloadMedia('30_inERWhteLjxtj0lGphr9RLmKY1FmrbW-c9uJxx45WqM8QWBj2ghYQmfpsYRiwv')
   }
 
   async onStop() {
@@ -509,9 +510,9 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
     const localFile = await this.downloadMedia(message.mediaId)
     message.filename = localFile.name
-    
-    if (getOss().type) {
-      const url = '' // upload to OSS
+
+    const url = await this.ossService.uploadFile(localFile, getUploadType(message.type))
+    if (url) {
       message.mediaOssUrl = url
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       fs.rmSync((localFile as any).localPath as string)
@@ -538,10 +539,12 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     }
 
     const payload = message.miniProgramPayload
-    if (!payload.thumbUrl && getOss().type) {
-      const file = this.messageFile(messageId)
+    if (!payload.thumbUrl && this.ossService.configured) {
+      const file = await this.messageFile(messageId)
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       const url = (file as any).remoteUrl as string
+
+      console.log(file, url)
       payload.thumbUrl = url
       await this.cacheService.setMessage(messageId, message)
     }

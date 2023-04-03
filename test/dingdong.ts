@@ -30,7 +30,12 @@ puppet.on('message', async payload => {
 
   if (messagePayload.type === types.Message.Image) {
     const file = await puppet.messageFile(messageId)
+    console.log(file)
     await file.toFile(undefined, true)
+  }
+
+  if (messagePayload.type === types.Message.MiniProgram) {
+    console.log(await puppet.messageMiniProgram(messageId))
   }
 
   const contact = await puppet.contactPayload(messagePayload.talkerId)
