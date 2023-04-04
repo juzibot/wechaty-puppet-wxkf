@@ -80,6 +80,9 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
   async onStart() {
     this.logger.info('onStart()')
     const selfInfo = await this.getSelfInfo()
+    if (!this.authData.kfOpenId) {
+      this.authData.kfOpenId = selfInfo.id
+    }
     this.cacheService.onStart(selfInfo.id)
     await this.cacheService.setContact(selfInfo.id, selfInfo)
 
