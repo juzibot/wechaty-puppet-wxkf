@@ -56,7 +56,7 @@ export const convertMessageToPayload = (rawMessage: WxkfMessage<MessageReceiveTy
     case MsgType.MSG_TYPE_MINIPROGRAM: 
       messagePayload.type = types.Message.MiniProgram
       messagePayload.miniProgramPayload = {
-        appid: rawMessage.miniprogram.appid,
+        username: rawMessage.miniprogram.appid, // wechaty miniprogram payload key is different with wecom
         title: rawMessage.miniprogram.title,
         pagePath: rawMessage.miniprogram.pagepath,
       }
