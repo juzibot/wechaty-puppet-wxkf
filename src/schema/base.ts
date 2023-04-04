@@ -11,6 +11,7 @@ export interface WxkfAuth {
   corpId?: string, // 企微客服所属企业的id
   corpSecret?: string, // 企微客服应用的secret
   kfOpenId?: string, // 企微客服openId
+  kfName?: string, // 企微客服名字
 }
 
 export const MessageTypesWithFile = [

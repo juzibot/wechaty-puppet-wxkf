@@ -183,7 +183,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       const response = await this.request(RequestTypes.GET_KF_ACCOUNT_LIST, data)
 
       const accounts = response.account_list
-      const currentAccount = accounts.filter(account => account.open_kfid === this.authData.kfOpenId)
+      const currentAccount = accounts.filter(account => (account.open_kfid === this.authData.kfOpenId || account.name === this.authData.kfName))
       if (currentAccount.length > 0) {
         if (currentAccount[0].manage_privilege) {
           const contactSelf = currentAccount[0]

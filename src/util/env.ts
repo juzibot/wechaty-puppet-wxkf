@@ -10,18 +10,28 @@ export const getAuthData = (options: WxkfAuth = {}) => {
   const corpId = options.corpId || process.env['WECOM_CORP_ID']
   const corpSecret = options.corpSecret || process.env['WECOM_CORP_SECRET']
   const kfOpenId = options.kfOpenId || process.env['WECOM_KF_OPEN_ID']
+  const kfName = options.kfName || process.env['WECOM_KF_NAME']
 
   const result = {
     token,
     encodingAESKey,
     corpId,
     corpSecret,
-    kfOpenId,
-  }
+  } as WxkfAuth
 
   for (const key in result) {
     if (!result[key]) {
       throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot auth, ${key} is missing`)
+    }
+  }
+
+  if (kfOpenId) {
+    result.kfOpenId = kfOpenId
+  } else {
+    if (kfName) {
+      result.kfName = kfName
+    } else {
+      throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `kf name or openid is not set`)
     }
   }
 
