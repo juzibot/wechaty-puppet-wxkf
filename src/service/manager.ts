@@ -436,7 +436,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       open_kfid: this.authData.kfOpenId,
       msgtype: MsgType.MSG_TYPE_MINIPROGRAM,
       miniprogram: {
-        appid: payload.appid,
+        appid: payload.appid.startsWith('gh_') ?  payload.username : payload.appid,
         title: payload.title,
         pagepath: payload.pagePath,
         thumb_media_id: mediaId,
