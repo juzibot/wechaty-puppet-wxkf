@@ -1,10 +1,9 @@
-import { GetZJYYAccessTokenRequest, GetZJYYAccessTokenResponse, GetContactInfoRequest, GetContactInfoResponse, GetKfAccountListRequest, GetKfAccountListResponse, MessageTypes, SendMessageRequest, SendMessageResponse, SyncMessageRequest, SyncMessageResponse, GetFWSDKFAccessTokenRequest, GetFWSDKFAccessTokenResponse } from './request'
+import { GetAccessTokenRequest, GetAccessTokenResponse, GetContactInfoRequest, GetContactInfoResponse, GetKfAccountListRequest, GetKfAccountListResponse, MessageTypes, SendMessageRequest, SendMessageResponse, SyncMessageRequest, SyncMessageResponse } from './request'
 
 export const baseUrl = 'https://qyapi.weixin.qq.com/cgi-bin'
 
 export enum RequestTypes {
-  GET_ZJYY_ACCESS_TOKEN,
-  GET_FWSDKF_ACCESS_TOKEN,
+  GET_ACCESS_TOKEN,
   SYNC_MESSAGE,
   SEND_MESSAGE,
   GET_KF_ACCOUNT_LIST,
@@ -12,8 +11,7 @@ export enum RequestTypes {
 }
 
 export const urlMapping = {
-  [RequestTypes.GET_ZJYY_ACCESS_TOKEN]: '/gettoken',
-  [RequestTypes.GET_FWSDKF_ACCESS_TOKEN]: '/service/get_provider_token',
+  [RequestTypes.GET_ACCESS_TOKEN]: '/gettoken',
   [RequestTypes.SYNC_MESSAGE]: '/kf/sync_msg',
   [RequestTypes.SEND_MESSAGE]: '/kf/send_msg',
   [RequestTypes.GET_KF_ACCOUNT_LIST]: '/kf/account/list',
@@ -21,8 +19,7 @@ export const urlMapping = {
 }
 
 export type RequestTypeMapping = {
-  [RequestTypes.GET_ZJYY_ACCESS_TOKEN]: GetZJYYAccessTokenRequest
-  [RequestTypes.GET_FWSDKF_ACCESS_TOKEN]: GetFWSDKFAccessTokenRequest,
+  [RequestTypes.GET_ACCESS_TOKEN]: GetAccessTokenRequest
   [RequestTypes.SYNC_MESSAGE]: SyncMessageRequest
   [RequestTypes.SEND_MESSAGE]: SendMessageRequest<MessageTypes>
   [RequestTypes.GET_KF_ACCOUNT_LIST]: GetKfAccountListRequest
@@ -30,8 +27,7 @@ export type RequestTypeMapping = {
 }
 
 export type ResponseTypeMapping = {
-  [RequestTypes.GET_ZJYY_ACCESS_TOKEN]: GetZJYYAccessTokenResponse
-  [RequestTypes.GET_FWSDKF_ACCESS_TOKEN]: GetFWSDKFAccessTokenResponse,
+  [RequestTypes.GET_ACCESS_TOKEN]: GetAccessTokenResponse
   [RequestTypes.SYNC_MESSAGE]: SyncMessageResponse
   [RequestTypes.SEND_MESSAGE]: SendMessageResponse
   [RequestTypes.GET_KF_ACCOUNT_LIST]: GetKfAccountListResponse

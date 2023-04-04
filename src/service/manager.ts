@@ -1,4 +1,4 @@
-import { MessageTypesWithFile, PuppetWxkfOptions, WXKF_AUTH_TYPE, WxkfAuth } from '../schema/base'
+import { MessageTypesWithFile, PuppetWxkfOptions, WxkfAuth } from '../schema/base'
 import { getAuthData, getPort } from '../util/env'
 import { CallbackServer } from './callback-server'
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
@@ -7,7 +7,7 @@ import { ExecQueueService } from './exec-queue'
 import { baseUrl, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
 import WxkfError from '../error/error'
 import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
-import { DownloadMediaRequest, DownloadMediaResponse, FileMessageTypes, FileTypes, GetFWSDKFAccessTokenRequest, GetFWSDKFAccessTokenResponse, GetKfAccountListRequest, GetZJYYAccessTokenRequest, GetZJYYAccessTokenResponse, ImageMessage, LinkMessage, LocationMessage, MessageTypes, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage } from '../schema/request'
+import { DownloadMediaRequest, DownloadMediaResponse, FileMessageTypes, FileTypes, GetFWSDKFAccessTokenRequest, GetFWSDKFAccessTokenResponse, GetKfAccountListRequest, GetAccessTokenRequest, GetAccessTokenResponse, ImageMessage, LinkMessage, LocationMessage, MessageTypes, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage } from '../schema/request'
 import { Logger, payloads, types } from '../wechaty-dep'
 import { CacheService } from './cache'
 import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
@@ -101,30 +101,17 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       if (Date.now() - this.accessTokenTimestamp < 10 * MINUTE && this.accessToken) {
         return
       }
-      if (this.authData.authType === WXKF_AUTH_TYPE.ZJYY) {
-        const response = await axios.get<GetZJYYAccessTokenResponse, AxiosResponse<GetZJYYAccessTokenResponse>, GetZJYYAccessTokenRequest>(`${baseUrl}${urlMapping[RequestTypes.GET_ZJYY_ACCESS_TOKEN]}`, {
-          params: {
-            corpid: this.authData.corpId,
-            corpsecret: this.authData.corpSecret
-          }
-        })
-        if (response.data.errcode) {
-          throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot get access token for code: ${response.data.errcode}, message: ${response.data.errmsg}`)
+      const response = await axios.get<GetAccessTokenResponse, AxiosResponse<GetAccessTokenResponse>, GetAccessTokenRequest>(`${baseUrl}${urlMapping[RequestTypes.GET_ACCESS_TOKEN]}`, {
+        params: {
+          corpid: this.authData.corpId,
+          corpsecret: this.authData.corpSecret
         }
-        this.accessToken = response.data.access_token
+      })
+      if (response.data.errcode) {
+        throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot get access token for code: ${response.data.errcode}, message: ${response.data.errmsg}`)
       }
-      if (this.authData.authType === WXKF_AUTH_TYPE.FWSDKF) {
-        const response = await axios.post<GetFWSDKFAccessTokenResponse, AxiosResponse<GetFWSDKFAccessTokenResponse>, GetFWSDKFAccessTokenRequest>(`${baseUrl}${urlMapping[RequestTypes.GET_FWSDKF_ACCESS_TOKEN]}`, {
-          corpid: this.authData.providerCorpId,
-          provider_secret: this.authData.providerSecret
-        })
-        if (response.data.errcode) {
-          throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot get access token for code: ${response.data.errcode}, message: ${response.data.errmsg}`)
-        }
-        this.accessToken = response.data.provider_access_token
-      }
-  
-      // this.accessTokenExpireTime = Date.now() + response.data.expires_in * 1000
+      this.accessToken = response.data.access_token
+      
       this.accessTokenTimestamp = Date.now()
 
       if (this.accessTokenRenewTimer) {
@@ -309,7 +296,6 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     await file.toFile(localPath, true)
     const localFile = FileBox.fromFile(localPath, filename)
     const md5 = await getMd5(localFile)
-    console.log(md5)
 
     const mediaInfo = await this.cacheService.getMedia(md5)
     if (mediaInfo) {
@@ -557,7 +543,6 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       const url = (file as any).remoteUrl as string
 
-      console.log(file, url)
       payload.thumbUrl = url
       await this.cacheService.setMessage(messageId, message)
     }

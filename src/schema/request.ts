@@ -6,23 +6,13 @@ export interface ResponseBase {
   errmsg: string, // 错误码描述
 }
 
-export interface GetZJYYAccessTokenRequest {
+export interface GetAccessTokenRequest {
   corpid: string,
   corpsecret: string,
 }
 
-export interface GetZJYYAccessTokenResponse extends ResponseBase {
+export interface GetAccessTokenResponse extends ResponseBase {
   access_token?: string,
-  expires_in?: number
-}
-
-export interface GetFWSDKFAccessTokenRequest {
-  corpid: string,
-  provider_secret: string,
-}
-
-export interface GetFWSDKFAccessTokenResponse extends ResponseBase {
-  provider_access_token?: string,
   expires_in?: number
 }
 

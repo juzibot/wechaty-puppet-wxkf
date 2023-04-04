@@ -1,61 +1,31 @@
 import { OssConfig, OSS_CLIENT_TYPE, OssS3Config, OssAliConfig, OssMinioConfig, OssCosConfig, OssTosConfig } from '../service/oss/interface'
 import WxkfError from '../error/error'
 import { WXKF_ERROR } from '../error/error-code'
-import { WXKF_AUTH_TYPE, WxkfAuth, WxkfAuthZjyy } from '../schema/base'
-import { WxkfAuthFwsdkf } from '../schema/base'
+import { WxkfAuth } from '../schema/base'
 
-export const getAuthData = (rawOptions: WxkfAuth = {}) => {
-  const authType = rawOptions.authType || process.env['AUTH_TYPE']
+export const getAuthData = (options: WxkfAuth = {}) => {
+  const token = options.token || process.env['WECOM_APP_TOKEN']
+  const encodingAESKey =
+    options.encodingAESKey || process.env['WECOM_APP_AES_KEY']
+  const corpId = options.corpId || process.env['WECOM_CORP_ID']
+  const corpSecret = options.corpSecret || process.env['WECOM_CORP_SECRET']
+  const kfOpenId = options.kfOpenId || process.env['WECOM_KF_OPEN_ID']
 
-  switch (authType) {
-    case WXKF_AUTH_TYPE.ZJYY: {
-      const options = rawOptions as WxkfAuthZjyy
-      const token = options.token || process.env['WECOM_ZJYY_APP_TOKEN']
-      const encodingAESKey =
-        options.encodingAESKey || process.env['WECOM_ZJYY_APP_AES_KEY']
-      const corpId = options.corpId || process.env['WECOM_ZJYY_CORP_ID']
-      const corpSecret = options.corpSecret || process.env['WECOM_ZJYY_CORP_SECRET']
-      const kfOpenId = options.kfOpenId || process.env['WECOM_KF_OPEN_ID']
-    
-      const result: WxkfAuthZjyy = {
-        token,
-        encodingAESKey,
-        corpId,
-        corpSecret,
-        kfOpenId,
-        authType,
-      }
-      for (const key in result) {
-        if (!result[key]) {
-          throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot auth, ${key} is missing`)
-        }
-      }
-    
-      return result
-    }
-    case WXKF_AUTH_TYPE.FWSDKF: {
-      const options = rawOptions as WxkfAuthFwsdkf
-      const kfOpenId = options.kfOpenId || process.env['WECOM_KF_OPEN_ID']
-      const providerSecret = options.providerSecret || process.env['WECOM_FWSDKF_PROVIDER_SECRET']
-      const providerCorpId = options.providerCorpId || process.env['WECOM_FWSDKF_PROVIDER_CORP_ID']
-      const result: WxkfAuthFwsdkf = {
-        kfOpenId,
-        authType,
-        providerSecret,
-        providerCorpId,
-      }
-      for (const key in result) {
-        if (!result[key]) {
-          throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot auth, ${key} is missing`)
-        }
-      }
-    
-      return result
-    }
-    default:
-      throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot auth, unknwon auth type ${authType}`)
-
+  const result = {
+    token,
+    encodingAESKey,
+    corpId,
+    corpSecret,
+    kfOpenId,
   }
+
+  for (const key in result) {
+    if (!result[key]) {
+      throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot auth, ${key} is missing`)
+    }
+  }
+
+  return result
 }
 
 export const getPort = (portOption: string) => {
