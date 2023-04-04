@@ -1,9 +1,9 @@
 import { types } from '../wechaty-dep'
-import { WxkfMessage, MessageTypes, MsgType, MsgTypeChineseName } from '../schema/request'
+import { WxkfMessage, MsgType, MsgTypeChineseName, MessageReceiveTypes } from '../schema/request'
 import { timestampToMilliseconds } from './time'
 import { MessagePayloadCache } from '../schema/cache'
 
-export const convertMessageToPayload = (rawMessage: WxkfMessage<MessageTypes>) => {
+export const convertMessageToPayload = (rawMessage: WxkfMessage<MessageReceiveTypes>) => {
   const messagePayload: MessagePayloadCache = {
     id: rawMessage.msgid,
     talkerId: rawMessage.external_userid,

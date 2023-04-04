@@ -7,7 +7,7 @@ import { ExecQueueService } from './exec-queue'
 import { baseUrl, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
 import WxkfError from '../error/error'
 import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
-import { DownloadMediaRequest, DownloadMediaResponse, FileMessageTypes, FileTypes, GetKfAccountListRequest, GetAccessTokenRequest, GetAccessTokenResponse, ImageMessage, LinkMessage, LocationMessage, MessageTypes, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage } from '../schema/request'
+import { DownloadMediaRequest, DownloadMediaResponse, FileMessageTypes, FileTypes, GetKfAccountListRequest, GetAccessTokenRequest, GetAccessTokenResponse, ImageMessage, LocationMessage, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfMessage, LinkMessageSend, MessageReceiveTypes } from '../schema/request'
 import { Logger, payloads, types } from '../wechaty-dep'
 import { CacheService } from './cache'
 import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
@@ -208,7 +208,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     }
   }
 
-  async handleMessages(messages: WxkfMessage<MessageTypes>[], firstSync = false) {
+  async handleMessages(messages: WxkfMessage<MessageReceiveTypes>[], firstSync = false) {
     for (const message of messages) {
       if (Date.now() - timestampToMilliseconds(message.send_time) > HISTORY_MESSAGE_TIME_THRESHOLD || await this.cacheService.hasMessage(message.msgid)) {
         continue
@@ -450,7 +450,9 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
 
   async messageSendUrl(toId: string, payload: payloads.UrlLink) {
-    const data: SendMessageRequest<LinkMessage> = {
+    const { mediaId } = await this.uploadMedia(FileBox.fromUrl(payload.thumbnailUrl))
+
+    const data: SendMessageRequest<LinkMessageSend> = {
       touser: toId,
       open_kfid: this.authData.kfOpenId,
       msgtype: MsgType.MSG_TYPE_LINK,
@@ -458,7 +460,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
         title: payload.title,
         desc: payload.description,
         url: payload.url,
-        pic_url: payload.thumbnailUrl,
+        thumb_media_id: mediaId,
       }
     }
 

@@ -27,7 +27,7 @@ export interface SyncMessageRequest {
 export interface SyncMessageResponse extends ResponseBase {
   next_cursor: string // 下次调用带上该值，则从当前的位置继续往后拉，以实现增量拉取。强烈建议对该字段入库保存，每次请求读取带上，请求结束后更新。避免因意外丢，导致必须从头开始拉取，引起消息延迟。
   has_more: TrueOrFalse // 是否还有更多数据。0-否；1-是。不能通过判断msg_list是否空来停止拉取，可能会出现has_more为1，而msg_list为空的情况
-  msg_list: WxkfMessage<MessageTypes>[] // 消息列表
+  msg_list: WxkfMessage<MessageReceiveTypes>[] // 消息列表
 }
 
 export type WxkfMessage<T extends MessageTypes> = WxkfMessageBase & T
@@ -105,7 +105,21 @@ export type MessageTypes =
   | VideoMessage
   | FileMessage
   | LocationMessage
-  | LinkMessage
+  | LinkMessageSend
+  | LinkMessageReceive
+  | BusinessCardMessage
+  | MiniProgramMessage
+  | ChannelMessage
+  | UnsupportedMessage
+
+export type MessageReceiveTypes = 
+  | TextMessage
+  | ImageMessage
+  | VoiceMessage
+  | VideoMessage
+  | FileMessage
+  | LocationMessage
+  | LinkMessageReceive
   | BusinessCardMessage
   | MiniProgramMessage
   | ChannelMessage
@@ -157,13 +171,23 @@ export interface LocationMessage {
   }
 }
 
-export interface LinkMessage {
+export interface LinkMessageReceive {
   msgtype: MsgType.MSG_TYPE_LINK,
   link: {
     title: string,
     desc: string,
     url: string,
     pic_url: string
+  }
+}
+
+export interface LinkMessageSend {
+  msgtype: MsgType.MSG_TYPE_LINK,
+  link: {
+    title: string,
+    desc: string,
+    url: string,
+    thumb_media_id: string
   }
 }
 
