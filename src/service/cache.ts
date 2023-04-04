@@ -8,14 +8,14 @@ import { ContactPayloadCache, MEDIA_EXPIRE_THRESHOLD, MediaIdCache, MessagePaylo
 
 export class CacheService {
 
-  private readonly caches: {
+  private caches?: {
     property: FlashStore<string, string>
     message: FlashStore<string, MessagePayloadCache>
     contact: FlashStore<string, ContactPayloadCache>
     media: FlashStore<string, MediaIdCache>
   }
 
-  constructor (userId: string) {
+  onStart(userId: string) {
     const baseDir = path.join(
       os.homedir(),
       '.wecahty',
@@ -39,12 +39,15 @@ export class CacheService {
   }
 
   async onStop() {
+    if (!this.caches) {
+      return
+    }
     const promises: Promise<void>[] = []
     for (const key in this.caches) {
       const cache = this.caches[key] as FlashStore
       promises.push(cache.close())
     }
-    return Promise.all(promises)
+    await Promise.all(promises)
   }
 
   async setProperty(key: string, value: string) {

@@ -52,7 +52,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     this.callbackServer = new CallbackServer(authData, port)
     this.callbackServer.on('message', this.messageHandler.bind(this) as typeof this.messageHandler)
 
-    this.cacheService = new CacheService(this.authData.kfOpenId)
+    this.cacheService = new CacheService()
     this.ossService = new ObjectStorageService()
 
     this.postRequestInstance = axios.create({
@@ -79,7 +79,9 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   async onStart() {
     this.logger.info('onStart()')
-    await this.getSelfInfo()
+    const selfInfo = await this.getSelfInfo()
+    this.cacheService.onStart(selfInfo.id)
+    await this.cacheService.setContact(selfInfo.id, selfInfo)
 
     fs.mkdirpSync(FileTempDir)
     this.emit('login', {
@@ -187,12 +189,11 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       if (currentAccount.length > 0) {
         if (currentAccount[0].manage_privilege) {
           const contactSelf = currentAccount[0]
-          await this.cacheService.setContact(contactSelf.open_kfid, {
+          return {
             id: contactSelf.open_kfid,
             name: contactSelf.name,
             avatar: contactSelf.avatar,
-          })
-          return
+          }
         }
         throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot manage wxkf id: ${this.authData.kfOpenId}, you don't have required privilege`)
       }
