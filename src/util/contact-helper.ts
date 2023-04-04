@@ -14,7 +14,7 @@ export const convertContactToPayload = (rawContact: Customer): ContactPayloadCac
   return contactPayload
 }
 
-export const convertContactPayloadCacheToWecahtyPayload = (contactPayload: ContactPayloadCache): payloads.Contact => {
+export const convertContactPayloadCacheToWechatyPayload = (contactPayload: ContactPayloadCache): payloads.Contact => {
   const payload: payloads.Contact = {
     id: contactPayload.id,
     gender: contactPayload.gender,
@@ -23,6 +23,8 @@ export const convertContactPayloadCacheToWecahtyPayload = (contactPayload: Conta
     avatar: contactPayload.avatar,
     friend: false,
     phone: [],
+    weixin: contactPayload.id,
+    handle: contactPayload.id,
   }
 
   return payload
