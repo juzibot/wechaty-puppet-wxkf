@@ -2,7 +2,7 @@ import { FileBox } from '../../filebox-dep'
 import { Logger } from '../../wechaty-dep'
 import { MINUTE } from '../../util/time'
 import { S3Client } from './S3Client'
-import { OSS_CLIENT_TYPE, OssAliConfig, OssCosConfig, OssMinioConfig, OssS3Config, OssTosConfig, UPLOAD_TYPE } from './interface'
+import { OSS_CLIENT_TYPE, OssAliConfig, OssCosConfig, OssMinioConfig, OssOptions, OssS3Config, OssTosConfig, UPLOAD_TYPE } from './interface'
 import { AliClient } from './AliClient'
 import { MinioClient } from './MinioClient'
 import { TosClient } from './TosClient'
@@ -19,7 +19,7 @@ export class ObjectStorageService {
     return !!this.ossClient
   }
 
-  constructor(ossConfig: OssS3Config | OssAliConfig | OssMinioConfig | OssCosConfig | OssTosConfig) {
+  constructor(ossConfig: OssOptions) {
     const { ossClientType } = ossConfig
     switch (ossClientType) {
       case OSS_CLIENT_TYPE.S3:

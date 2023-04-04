@@ -1,10 +1,10 @@
-import { OssS3Config, OssAliConfig, OssMinioConfig, OssCosConfig, OssTosConfig } from '../service/oss/interface'
+import { OssOptions } from '../service/oss/interface'
 import { PuppetOptions, types } from '../wechaty-dep'
 
 export interface PuppetWxkfOptions extends PuppetOptions {
   callbackPort?: string,
   wxkfAuth?: WxkfAuth,
-  ossOptions?: OssS3Config | OssAliConfig | OssMinioConfig | OssCosConfig | OssTosConfig
+  ossOptions?: OssOptions
 }
 
 export interface WxkfAuth {

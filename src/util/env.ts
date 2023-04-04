@@ -1,4 +1,4 @@
-import { OssConfig, OSS_CLIENT_TYPE, OssS3Config, OssAliConfig, OssMinioConfig, OssCosConfig, OssTosConfig } from '../service/oss/interface'
+import { OssConfig, OSS_CLIENT_TYPE, OssOptions, OssEmptyConfig, OssAliConfig, OssCosConfig, OssMinioConfig, OssS3Config, OssTosConfig } from '../service/oss/interface'
 import WxkfError from '../error/error'
 import { WXKF_ERROR } from '../error/error-code'
 import { WxkfAuth } from '../schema/base'
@@ -43,12 +43,12 @@ export const getPort = (portOption: string) => {
   return port
 }
 
-export const getOss = (ossOptions: OssS3Config | OssAliConfig | OssMinioConfig | OssCosConfig | OssTosConfig) => {
+export const getOss = (ossOptions: OssOptions): OssOptions => {
   const type = process.env['PUPPET_WXKF_OSS_CLIENT_TYPE'] || ''
   if (!type) {
     return {
       ossClientType: '',
-    } as any
+    } as OssEmptyConfig
   }
 
   const basicConfig = {

@@ -1,5 +1,11 @@
 import { Readable } from 'stream'
 
+export type OssOptions = OssS3Config | OssAliConfig | OssMinioConfig | OssCosConfig | OssTosConfig | OssEmptyConfig
+
+export interface OssEmptyConfig {
+  ossClientType: ''
+}
+
 export interface OssBasicConfig {
   ossClientType: string,
   ossRegion: string,
