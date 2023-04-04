@@ -4,8 +4,8 @@
   "description": "",
   "exports": {
     ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "import": "./dist/esm/src/index.js",
+      "require": "./dist/cjs/src/index.js"
     }
   },
   "typings": "./dist/esm/index.d.ts",
@@ -48,6 +48,7 @@
     "typed-emitter": "^2.1.0"
   },
   "files": [
-    "dist/"
+    "dist/",
+    "src/"
   ]
 }
