@@ -8,7 +8,7 @@
       "require": "./dist/cjs/src/index.js"
     }
   },
-  "typings": "./dist/esm/index.d.ts",
+  "typings": "./dist/esm/src/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dist": "npm-run-all clean build fixup",
