@@ -1,5 +1,5 @@
 import { MessageTypesWithFile, PuppetWxkfOptions, WxkfAuth } from '../schema/base'
-import { getAuthData, getPort } from '../util/env'
+import { getAuthData, getOss, getPort } from '../util/env'
 import { CallbackServer } from './callback-server'
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
 import { MINUTE, SECOND, timestampToMilliseconds } from '../util/time'
@@ -46,6 +46,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
   constructor(options: PuppetWxkfOptions) {
     super()
     const authData = getAuthData(options['authData'])
+    const ossConfig = getOss(options['ossOptions'])
     this.authData = authData
     const port = getPort(options.callbackPort)
 

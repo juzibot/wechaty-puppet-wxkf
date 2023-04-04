@@ -43,7 +43,7 @@ export const getPort = (portOption: string) => {
   return port
 }
 
-export const getOss = () => {
+export const getOss = (ossOptions: OssS3Config | OssAliConfig | OssMinioConfig | OssCosConfig | OssTosConfig) => {
   const type = process.env['PUPPET_WXKF_OSS_CLIENT_TYPE'] || ''
   if (!type) {
     return {
@@ -86,5 +86,8 @@ export const getOss = () => {
     default:
       (ossConfig as OssS3Config).ossExpireTime = Number(process.env['PUPPET_WXKF_OSS_EXPIRE_TIME'] || 3600 * 1000 * 24 * 30)
   }
-  return ossConfig
+  return {
+    ...ossConfig,
+    ...ossOptions,
+  }
 }
