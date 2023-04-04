@@ -5,15 +5,12 @@ import { Readable } from 'stream'
 import { v4 as uuidV4 } from 'uuid'
 import { OssAliConfig, OssUploadFileParams, OSS_CLIENT_TYPE, UPLOAD_TYPE } from './interface'
 import { Logger } from '../../wechaty-dep'
-import { getOss } from '../../util/env'
 
 export class AliClient {
   private instance: OSS
-  private ossConfig: OssAliConfig
   private readonly logger = new Logger(AliClient.name)
 
-  constructor() {
-    this.ossConfig = getOss() as OssAliConfig
+  constructor(private ossConfig: OssAliConfig) {
     if (this.ossConfig.ossClientType !== OSS_CLIENT_TYPE.Ali) {
       this.logger.info(`trying to get ${AliClient.name} instance when the client type is ${this.ossConfig.ossClientType}`)
       return

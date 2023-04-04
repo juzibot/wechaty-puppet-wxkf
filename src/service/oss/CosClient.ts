@@ -5,15 +5,12 @@ import { Readable } from 'stream'
 import { v4 as uuidV4 } from 'uuid'
 import { OssCosConfig, OssUploadFileParams, OSS_CLIENT_TYPE, UPLOAD_TYPE } from './interface'
 import { Logger } from '../../wechaty-dep'
-import { getOss } from '../../util/env'
 
 export class CosClient {
   private instance: COS
-  private ossConfig: OssCosConfig
   private readonly logger = new Logger(CosClient.name)
 
-  constructor() {
-    this.ossConfig = getOss() as OssCosConfig
+  constructor(private ossConfig: OssCosConfig) {
     if (this.ossConfig.ossClientType !== OSS_CLIENT_TYPE.Cos) {
       // prettier-ignore
       this.logger.info(`trying to get ${CosClient.name} instance when the client type is ${this.ossConfig.ossClientType}`)

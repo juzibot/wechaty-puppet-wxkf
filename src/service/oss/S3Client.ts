@@ -5,15 +5,12 @@ import { Readable } from 'stream'
 import { v4 as uuidV4 } from 'uuid'
 import { OssS3Config, OssUploadFileParams, OSS_CLIENT_TYPE, UPLOAD_TYPE } from './interface'
 import { Logger } from '../..//wechaty-dep'
-import { getOss } from '../../util/env'
 
 export class S3Client {
   private s3Instance: S3
-  private ossConfig: OssS3Config
   private readonly logger = new Logger(S3Client.name)
 
-  constructor() {
-    this.ossConfig = getOss() as OssS3Config
+  constructor(private ossConfig: OssS3Config) {
     if (this.ossConfig.ossClientType !== OSS_CLIENT_TYPE.S3) {
       this.logger.info(`trying to get ${S3Client.name} instance when the client type is ${this.ossConfig.ossClientType}`)
       return

@@ -54,7 +54,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     this.callbackServer.on('message', this.messageHandler.bind(this) as typeof this.messageHandler)
 
     this.cacheService = new CacheService()
-    this.ossService = new ObjectStorageService()
+    this.ossService = new ObjectStorageService(ossConfig)
 
     this.postRequestInstance = axios.create({
       baseURL: baseUrl,

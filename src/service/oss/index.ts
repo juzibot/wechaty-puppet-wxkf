@@ -1,9 +1,8 @@
 import { FileBox } from '../../filebox-dep'
 import { Logger } from '../../wechaty-dep'
 import { MINUTE } from '../../util/time'
-import { getOss } from '../../util/env'
 import { S3Client } from './S3Client'
-import { OSS_CLIENT_TYPE, UPLOAD_TYPE } from './interface'
+import { OSS_CLIENT_TYPE, OssAliConfig, OssCosConfig, OssMinioConfig, OssS3Config, OssTosConfig, UPLOAD_TYPE } from './interface'
 import { AliClient } from './AliClient'
 import { MinioClient } from './MinioClient'
 import { TosClient } from './TosClient'
@@ -20,23 +19,23 @@ export class ObjectStorageService {
     return !!this.ossClient
   }
 
-  constructor() {
-    const { ossClientType } = getOss()
+  constructor(ossConfig: OssS3Config | OssAliConfig | OssMinioConfig | OssCosConfig | OssTosConfig) {
+    const { ossClientType } = ossConfig
     switch (ossClientType) {
       case OSS_CLIENT_TYPE.S3:
-        this.ossClient = new S3Client()
+        this.ossClient = new S3Client(ossConfig as OssS3Config)
         break
       case OSS_CLIENT_TYPE.Ali:
-        this.ossClient = new AliClient()
+        this.ossClient = new AliClient(ossConfig as OssAliConfig)
         break
       case OSS_CLIENT_TYPE.Minio:
-        this.ossClient = new MinioClient()
+        this.ossClient = new MinioClient(ossConfig as OssMinioConfig)
         break
       case OSS_CLIENT_TYPE.Cos:
-        this.ossClient = new CosClient()
+        this.ossClient = new CosClient(ossConfig as OssCosConfig)
         break
       case OSS_CLIENT_TYPE.Tos:
-        this.ossClient = new TosClient()
+        this.ossClient = new TosClient(ossConfig as OssTosConfig)
         break
       default:
         this.ossClient = null

@@ -5,15 +5,12 @@ import { Readable } from 'stream'
 import { v4 as uuidV4 } from 'uuid'
 import { OssMinioConfig, OssUploadFileParams, OSS_CLIENT_TYPE, UPLOAD_TYPE } from './interface'
 import { Logger } from '../../wechaty-dep'
-import { getOss } from '../../util/env'
 
 export class MinioClient {
   private instance: Minio
-  private ossConfig: OssMinioConfig
   private readonly logger = new Logger(MinioClient.name)
 
-  constructor() {
-    this.ossConfig = getOss() as OssMinioConfig
+  constructor(private ossConfig: OssMinioConfig) {
     if (this.ossConfig.ossClientType !== OSS_CLIENT_TYPE.Minio) {
       // prettier-ignore
       this.logger.info(`trying to get ${MinioClient.name} instance when the client type is ${this.ossConfig.ossClientType}`)

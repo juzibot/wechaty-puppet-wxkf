@@ -5,15 +5,12 @@ import { Readable } from 'stream'
 import { v4 as uuidV4 } from 'uuid'
 import { OssTosConfig, OssUploadFileParams, OSS_CLIENT_TYPE, UPLOAD_TYPE } from './interface'
 import { Logger } from '../../wechaty-dep'
-import { getOss } from '../../util/env'
 
 export class TosClient {
   private tosInstance: TOS
-  private ossConfig: OssTosConfig
   private readonly logger = new Logger(TosClient.name)
 
-  constructor() {
-    this.ossConfig = getOss() as OssTosConfig
+  constructor(private ossConfig: OssTosConfig) {
     if (this.ossConfig.ossClientType !== OSS_CLIENT_TYPE.Tos) {
       this.logger.info(`trying to get ${TosClient.name} instance when the client type is ${this.ossConfig.ossClientType}`)
       return

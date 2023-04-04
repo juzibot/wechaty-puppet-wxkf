@@ -48,7 +48,7 @@ export const getOss = (ossOptions: OssS3Config | OssAliConfig | OssMinioConfig |
   if (!type) {
     return {
       ossClientType: '',
-    }
+    } as any
   }
 
   const basicConfig = {
