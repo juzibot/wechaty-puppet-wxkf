@@ -27,6 +27,7 @@ import { FileMessage } from '../schema/request'
 import FormData from 'form-data'
 import { MEDIA_EXPIRE_THRESHOLD } from '../schema/cache'
 import { ObjectStorageService } from './oss'
+import { KnownErrorCodeReason } from '../error/wecom-error-code'
 
 export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEvents>) {
   private readonly logger = new Logger(Manager.name)
@@ -139,7 +140,10 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
     const responseData = response.data
     if (responseData.errcode) {
-      throw new WxkfError(WXKF_ERROR_CODE.SERVER_ERROR, `request error with code: ${responseData.errcode}, message: ${responseData.errmsg}`)
+      throw new WxkfError(WXKF_ERROR_CODE.SERVER_ERROR, 
+        KnownErrorCodeReason[String(responseData.errcode)]
+          || `request error with code: ${responseData.errcode}, message: ${responseData.errmsg}`
+      )
     }
 
     this.logger.info(`response(${RequestTypes[type]}): ${JSON.stringify(response.data)}`)
