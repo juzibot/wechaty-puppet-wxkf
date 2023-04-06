@@ -39,7 +39,7 @@ export const getAuthData = (options: WxkfAuth = {}) => {
 }
 
 export const getPort = (portOption: string) => {
-  const port = Number(portOption || process.env['PUPPET_WXKF_WXKF_CALLBACK_PORT']) || 3000
+  const port = Number(portOption || process.env['PUPPET_WXKF_CALLBACK_PORT']) || 3000
   return port
 }
 
