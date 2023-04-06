@@ -1,4 +1,4 @@
-import { GetAccessTokenRequest, GetAccessTokenResponse, GetContactInfoRequest, GetContactInfoResponse, GetKfAccountListRequest, GetKfAccountListResponse, MessageTypes, SendMessageRequest, SendMessageResponse, SyncMessageRequest, SyncMessageResponse } from './request'
+import { GetAccessTokenRequest, GetAccessTokenResponse, GetContactInfoRequest, GetContactInfoResponse, GetKfAccountListRequest, GetKfAccountListResponse, MessageSendTypes, SendMessageRequest, SendMessageResponse, SyncMessageRequest, SyncMessageResponse } from './request'
 
 export const baseUrl = 'https://qyapi.weixin.qq.com/cgi-bin'
 
@@ -21,7 +21,7 @@ export const urlMapping = {
 export type RequestTypeMapping = {
   [RequestTypes.GET_ACCESS_TOKEN]: GetAccessTokenRequest
   [RequestTypes.SYNC_MESSAGE]: SyncMessageRequest
-  [RequestTypes.SEND_MESSAGE]: SendMessageRequest<MessageTypes>
+  [RequestTypes.SEND_MESSAGE]: SendMessageRequest<MessageSendTypes>
   [RequestTypes.GET_KF_ACCOUNT_LIST]: GetKfAccountListRequest
   [RequestTypes.BATCH_GET_CUSTOMER_INFO]: GetContactInfoRequest
 }

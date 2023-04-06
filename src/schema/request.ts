@@ -27,12 +27,12 @@ export interface SyncMessageRequest {
 export interface SyncMessageResponse extends ResponseBase {
   next_cursor: string // 下次调用带上该值，则从当前的位置继续往后拉，以实现增量拉取。强烈建议对该字段入库保存，每次请求读取带上，请求结束后更新。避免因意外丢，导致必须从头开始拉取，引起消息延迟。
   has_more: TrueOrFalse // 是否还有更多数据。0-否；1-是。不能通过判断msg_list是否空来停止拉取，可能会出现has_more为1，而msg_list为空的情况
-  msg_list: WxkfMessage<MessageReceiveTypes>[] // 消息列表
+  msg_list: WxkfReceiveMessage<MessageReceiveTypes>[] // 消息列表
 }
 
-export type WxkfMessage<T extends MessageTypes> = WxkfMessageBase & T
+export type WxkfReceiveMessage<T extends MessageReceiveTypes> = WxkfReceiveMessageBase & T
 
-export type WxkfMessageBase = {
+export type WxkfReceiveMessageBase = {
   msgid: string // 消息ID
   open_kfid?: string // 客服帐号ID（msgtype为event，该字段不返回）
   external_userid?: string // 客户UserID（msgtype为event，该字段不返回）
@@ -98,7 +98,7 @@ export const MsgTypeChineseName = {
   [MsgType.MSG_TYPE_SCHEDULE]: '日程',
 }
 
-export type MessageTypes = 
+export type MessageSendTypes = 
   | TextMessage
   | ImageMessage
   | VoiceMessage
@@ -106,11 +106,7 @@ export type MessageTypes =
   | FileMessage
   | LocationMessage
   | LinkMessageSend
-  | LinkMessageReceive
-  | BusinessCardMessage
   | MiniProgramMessage
-  | ChannelMessage
-  | UnsupportedMessage
 
 export type MessageReceiveTypes = 
   | TextMessage
@@ -222,7 +218,7 @@ export interface UnsupportedMessage {
   | MsgType.MSG_TYPE_SCHEDULE
 }
 
-export type SendMessageRequest<T extends MessageTypes> = SendMessageRequestBase & T
+export type SendMessageRequest<T extends MessageSendTypes> = SendMessageRequestBase & T
 
 export interface SendMessageRequestBase {
   touser: string,
