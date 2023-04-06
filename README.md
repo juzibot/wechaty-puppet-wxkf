@@ -64,7 +64,9 @@ If you want to manage a new WXKF account, here's what you gonna do.
 
 - Create a new Customer Service Account in the Wechat Customer Service app page. Give it a `name` and avatar.
 
-  Note: You can use `name` or `kfId` to identify your Wechat Customer Service account. However you cannot get ID in this webpage but only in apis. So if you want to identify by name, remember to give unique names to your 
+  Note: You can use `name` or `kfId` to identify your Wechat Customer Service account. However you cannot get ID in this webpage but only in apis. So if you want to identify by name, remember to give unique names to your account.
+
+- Allocate the Customer Service account to the app you are developing. You can do this by clicking the 'In-house development' link or the 'Authorize custom apps' link in the above image.
 
 - Get your `token` and `encodingAESKey`. These keys will be used to decrypt callbacks from wecom so you can receive messages.
 
