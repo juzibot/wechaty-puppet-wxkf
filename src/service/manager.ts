@@ -44,6 +44,8 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
   private accessTokenTimestamp?: number
   private accessTokenRenewTimer: NodeJS.Timeout
 
+  private syncMessageTimer: NodeJS.Timeout
+
   constructor(options: PuppetWxkfOptions) {
     super()
     const authData = getAuthData(options['authData'])
@@ -92,7 +94,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     this.emit('login', {
       contactId: this.authData.kfOpenId
     })
-    await this.syncMessage()
+    await this.syncMessage(undefined, true)
     this.emit('ready', {
       data: 'data ready'
     })
@@ -156,11 +158,14 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     void this.syncMessage(token)
   }
 
-  private async syncMessage(token?: string) {
+  private async syncMessage(token?: string, firstSync = false) {
     this.logger.info(`syncMessage(${token})`)
-    await ExecQueueService.exec(async () => {
-      const firstSync = !token
 
+    if (this.syncMessageTimer) (
+      clearTimeout(this.syncMessageTimer)
+      this.syncMessage = undefined
+    )
+    await ExecQueueService.exec(async () => {
       let cursor = await this.cacheService.getProperty('messageSeq')
       let hasNext = true
       while (hasNext) {
@@ -176,6 +181,12 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
         void this.handleMessages(responseData.msg_list, firstSync)
       }
       await this.cacheService.setProperty('messageSeq', cursor)
+
+      if (!this.syncMessageTimer) {
+        this.syncMessageTimer = setTimeout(() => {
+          void this.syncMessage(undefined, false)
+        }, 1 * MINUTE)
+      }
     }, {
       queueId: 'sync-message',
       delayAfter: 100,
