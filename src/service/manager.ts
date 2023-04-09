@@ -161,10 +161,10 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
   private async syncMessage(token?: string, firstSync = false) {
     this.logger.info(`syncMessage(${token})`)
 
-    if (this.syncMessageTimer) (
+    if (this.syncMessageTimer) {
       clearTimeout(this.syncMessageTimer)
       this.syncMessage = undefined
-    )
+    }
     await ExecQueueService.exec(async () => {
       let cursor = await this.cacheService.getProperty('messageSeq')
       let hasNext = true
