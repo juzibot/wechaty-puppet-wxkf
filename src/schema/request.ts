@@ -314,3 +314,28 @@ export interface DownloadMediaRequest {
 export type DownloadMediaResponse = stream.Readable
 
 export type FileMessageTypes = ImageMessage | VoiceMessage | VideoMessage | FileMessage
+
+export interface RegisterWxkfPuppetRequest {
+  kfId: string,
+  kfName: string,
+  endpoint: string,
+  corpId: string,
+  corpSecret: string,
+  token: string,
+  encodingAESKey: string,
+}
+
+export interface ManagerCenterResponseBase {
+  code: number,
+  message: string,
+}
+
+export interface RegisterWxkfPuppetResponse extends ManagerCenterResponseBase {}
+
+export interface DeregisterWxkfPuppetRequest {
+  kfId: string,
+  kfName: string,
+  corpId: string,
+}
+
+export interface DeregisterWxkfPuppetResponse extends ManagerCenterResponseBase {}

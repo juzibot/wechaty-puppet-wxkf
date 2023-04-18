@@ -4,7 +4,8 @@ import { PuppetOptions, types } from '../wechaty-dep'
 export interface PuppetWxkfOptions extends PuppetOptions {
   callbackPort?: string,
   wxkfAuth?: WxkfAuth,
-  ossOptions?: OssOptions
+  ossOptions?: OssOptions,
+  managerCenterConfig?: ManagerCenterConfig,
 }
 
 export interface WxkfAuth {
@@ -14,6 +15,11 @@ export interface WxkfAuth {
   corpSecret?: string, // 企微客服应用的secret
   kfOpenId?: string, // 企微客服openId
   kfName?: string, // 企微客服名字
+}
+
+export interface ManagerCenterConfig {
+  endpoint: string,
+  selfEndpoint: string,
 }
 
 export const MessageTypesWithFile = [

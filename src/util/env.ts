@@ -1,7 +1,7 @@
 import { OssConfig, OSS_CLIENT_TYPE, OssOptions, OssEmptyConfig, OssAliConfig, OssCosConfig, OssMinioConfig, OssS3Config, OssTosConfig } from '../service/oss/interface'
 import WxkfError from '../error/error'
 import { WXKF_ERROR } from '../error/error-code'
-import { WxkfAuth } from '../schema/base'
+import { ManagerCenterConfig, WxkfAuth } from '../schema/base'
 
 export const getAuthData = (options: WxkfAuth = {}) => {
   const token = options.token || process.env['PUPPET_WXKF_WECOM_APP_TOKEN']
@@ -90,4 +90,13 @@ export const getOss = (ossOptions: OssOptions): OssOptions => {
     ...ossConfig,
     ...ossOptions,
   }
+}
+
+export const getManagerCenterConfig = (managerCenterConfig?: ManagerCenterConfig) => {
+  const config = {
+    endpoint: managerCenterConfig?.endpoint || process.env['PUPPET_WXKF_MANAGER_CENTER_ENDPOINT'],
+    selfEndpoint: managerCenterConfig?.selfEndpoint || process.env['PUPPET_WXKF_SELF_ENDPOINT'],
+  }
+
+  return config.endpoint && config.selfEndpoint ? config : undefined
 }

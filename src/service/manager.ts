@@ -1,13 +1,13 @@
-import { MessageTypesWithFile, PuppetWxkfOptions, WxkfAuth } from '../schema/base'
-import { getAuthData, getOss, getPort } from '../util/env'
+import { ManagerCenterConfig, MessageTypesWithFile, PuppetWxkfOptions, WxkfAuth } from '../schema/base'
+import { getAuthData, getManagerCenterConfig, getOss, getPort } from '../util/env'
 import { CallbackServer } from './callback-server'
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
 import { MINUTE, SECOND, timestampToMilliseconds } from '../util/time'
 import { ExecQueueService } from './exec-queue'
-import { baseUrl, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
+import { baseUrl, ManagerCenterRequestTypes, managerCenterUrlMapping, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
 import WxkfError from '../error/error'
 import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
-import { DownloadMediaRequest, DownloadMediaResponse, FileMessageTypes, FileTypes, GetKfAccountListRequest, GetAccessTokenRequest, GetAccessTokenResponse, ImageMessage, LocationMessage, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfReceiveMessage, LinkMessageSend, MessageReceiveTypes } from '../schema/request'
+import { DownloadMediaRequest, DownloadMediaResponse, FileMessageTypes, FileTypes, GetKfAccountListRequest, GetAccessTokenRequest, GetAccessTokenResponse, ImageMessage, LocationMessage, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfReceiveMessage, LinkMessageSend, MessageReceiveTypes, RegisterWxkfPuppetRequest, RegisterWxkfPuppetResponse, DeregisterWxkfPuppetRequest, DeregisterWxkfPuppetResponse } from '../schema/request'
 import { Logger, payloads, types } from '../wechaty-dep'
 import { CacheService } from './cache'
 import { HISTORY_MESSAGE_TIME_THRESHOLD } from '../util/constant'
@@ -38,13 +38,17 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
   private readonly postRequestInstance: AxiosInstance
   private readonly cacheService: CacheService
   private readonly ossService: ObjectStorageService
+  private readonly managerCenterConfig?: ManagerCenterConfig
 
   private accessToken?: string
   // private accessTokenExpireTime?: number
   private accessTokenTimestamp?: number
+  private accessTokenExpireTimestamp?: number
   private accessTokenRenewTimer: NodeJS.Timeout
 
   private syncMessageTimer: NodeJS.Timeout
+
+  private registered = false
 
   constructor(options: PuppetWxkfOptions) {
     super()
@@ -52,6 +56,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     const ossConfig = getOss(options['ossOptions'])
     this.authData = authData
     const port = getPort(options.callbackPort)
+    this.managerCenterConfig = getManagerCenterConfig(options.managerCenterConfig)
 
     this.callbackServer = new CallbackServer(authData, port)
     this.callbackServer.on('message', this.messageHandler.bind(this) as typeof this.messageHandler)
@@ -83,10 +88,16 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   async onStart() {
     this.logger.info('onStart()')
+
     const selfInfo = await this.getSelfInfo()
     if (!this.authData.kfOpenId) {
       this.authData.kfOpenId = selfInfo.id
     }
+    if (!this.authData.kfName) {
+      this.authData.kfName = selfInfo.name
+    }
+    await this.registerPuppet()
+
     this.cacheService.onStart(selfInfo.id)
     await this.cacheService.setContact(selfInfo.id, selfInfo)
 
@@ -103,14 +114,21 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
   async onStop() {
     await this.cacheService.onStop()
     this.callbackServer.onStop()
+    await this.deregisterPuppet()
   }
 
   private async getAccessToken() {
     return ExecQueueService.exec(async () => {
-      if (Date.now() - this.accessTokenTimestamp < 10 * MINUTE && this.accessToken) {
+      if (Date.now() - this.accessTokenTimestamp < 10 * MINUTE && this.accessToken && Date.now() < this.accessTokenExpireTimestamp) {
         return
       }
-      const response = await axios.get<GetAccessTokenResponse, AxiosResponse<GetAccessTokenResponse>, GetAccessTokenRequest>(`${baseUrl}${urlMapping[RequestTypes.GET_ACCESS_TOKEN]}`, {
+      if (this.accessTokenRenewTimer) {
+        clearTimeout(this.accessTokenRenewTimer)
+      }
+
+      const url = this.registered ? `${this.managerCenterConfig.endpoint}${managerCenterUrlMapping[RequestTypes.GET_ACCESS_TOKEN]}` : `${baseUrl}${urlMapping[RequestTypes.GET_ACCESS_TOKEN]}`
+
+      const response = await axios.get<GetAccessTokenResponse, AxiosResponse<GetAccessTokenResponse>, GetAccessTokenRequest>(url, {
         params: {
           corpid: this.authData.corpId,
           corpsecret: this.authData.corpSecret
@@ -119,16 +137,20 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       if (response.data.errcode) {
         throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `cannot get access token for code: ${response.data.errcode}, message: ${response.data.errmsg}`)
       }
-      this.accessToken = response.data.access_token
+      if (this.accessToken !== response.data.access_token) {
+        this.accessToken = response.data.access_token
+        this.accessTokenTimestamp = Date.now()
+      }
+
+      this.accessTokenExpireTimestamp = timestampToMilliseconds(Date.now() + response.data.expires_in * 1000)
       
-      this.accessTokenTimestamp = Date.now()
 
       if (this.accessTokenRenewTimer) {
         clearTimeout(this.accessTokenRenewTimer)
       }
       this.accessTokenRenewTimer = setTimeout(() => {
         void this.getAccessToken()
-      })
+      }, response.data.expires_in * 1000 - 10 * MINUTE)
     }, {
       queueId: 'get-access-token',
       delayAfter: 100,
@@ -163,7 +185,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
     if (this.syncMessageTimer) {
       clearTimeout(this.syncMessageTimer)
-      this.syncMessage = undefined
+      this.syncMessageTimer = undefined
     }
     await ExecQueueService.exec(async () => {
       let cursor = await this.cacheService.getProperty('messageSeq')
@@ -284,7 +306,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     }
     
     if (file.md5) {
-      const mediaInfo = await this.cacheService.getMedia(file.md5 as string) // why this as is needed?
+      const mediaInfo = await this.cacheService.getMedia(file.md5 ) // why this as is needed?
       if (mediaInfo) {
         this.logger.info(`got ${mediaInfo.type} from metadata md5 cache: ${mediaInfo.mediaId}`)
 
@@ -629,5 +651,67 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     }
 
     throw new WxkfError(WXKF_ERROR.CONTACT_PARSE_ERROR, `cannot find contact for id: ${contactId}`)
+  }
+
+  /**
+   * Manager-Center
+   */
+
+  async registerPuppet() {
+    if (!this.managerCenterConfig) {
+      this.logger.info('manager endpoint not set, skip register')
+      return
+    }
+    this.logger.info('registerPuppet()')
+
+    const url = `${this.managerCenterConfig.endpoint}${managerCenterUrlMapping[ManagerCenterRequestTypes.REGISTER]}`
+
+    try {
+      const response = await axios.post<RegisterWxkfPuppetResponse, AxiosResponse<RegisterWxkfPuppetResponse>, RegisterWxkfPuppetRequest>(url, {
+        kfId: this.authData.kfOpenId,
+        kfName: this.authData.kfName,
+        endpoint: this.managerCenterConfig.selfEndpoint,
+        corpId: this.authData.corpId,
+        corpSecret: this.authData.corpSecret,
+        token: this.authData.token,
+        encodingAESKey: this.authData.encodingAESKey,
+      })
+  
+      if (response.data.code) {
+        throw new Error(response.data.message)    
+      }
+      this.logger.info(`register to ${this.managerCenterConfig.endpoint} successfully!`)
+      this.registered = true
+    } catch (e) {
+      this.logger.error(`register failed for message ${(e as Error).message}, will try again in 5 minutes`)
+      setTimeout(() => {
+        void this.registerPuppet()
+      }, 5 * MINUTE)
+    }
+  }
+
+  async deregisterPuppet() {
+    if (!this.managerCenterConfig) {
+      this.logger.info('manager endpoint not set, skip deregister')
+    }
+    if (!this.registered) {
+      this.logger.info('bot is not registered, skip deregister')
+      return
+    }
+    this.logger.info('deregisterPuppet()')
+
+    const url = `${this.managerCenterConfig.endpoint}${managerCenterUrlMapping[ManagerCenterRequestTypes.DEREGISTER]}`
+
+    const response = await axios.post<DeregisterWxkfPuppetResponse, AxiosResponse<DeregisterWxkfPuppetResponse>, DeregisterWxkfPuppetRequest>(url, {
+      kfId: this.authData.kfOpenId,
+      kfName: this.authData.kfName,
+      corpId: this.authData.corpId,
+    })
+
+    if (response.data.code) {
+      this.logger.warn(`deregister failed for message ${response.data.message}, will proceed anyway`)
+    }
+
+    this.registered = false
   }
 }

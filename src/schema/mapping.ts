@@ -1,4 +1,4 @@
-import { GetAccessTokenRequest, GetAccessTokenResponse, GetContactInfoRequest, GetContactInfoResponse, GetKfAccountListRequest, GetKfAccountListResponse, MessageSendTypes, SendMessageRequest, SendMessageResponse, SyncMessageRequest, SyncMessageResponse } from './request'
+import { DeregisterWxkfPuppetRequest, GetAccessTokenRequest, GetAccessTokenResponse, GetContactInfoRequest, GetContactInfoResponse, GetKfAccountListRequest, GetKfAccountListResponse, MessageSendTypes, RegisterWxkfPuppetRequest, RegisterWxkfPuppetResponse, SendMessageRequest, SendMessageResponse, SyncMessageRequest, SyncMessageResponse, DeregisterWxkfPuppetResponse } from './request'
 
 export const baseUrl = 'https://qyapi.weixin.qq.com/cgi-bin'
 
@@ -32,4 +32,28 @@ export type ResponseTypeMapping = {
   [RequestTypes.SEND_MESSAGE]: SendMessageResponse
   [RequestTypes.GET_KF_ACCOUNT_LIST]: GetKfAccountListResponse
   [RequestTypes.BATCH_GET_CUSTOMER_INFO]: GetContactInfoResponse
+}
+
+export enum ManagerCenterRequestTypes {
+  GET_ACCESS_TOKEN,
+  REGISTER,
+  DEREGISTER,
+}
+
+export const managerCenterUrlMapping = {
+  [ManagerCenterRequestTypes.GET_ACCESS_TOKEN]: '/puppetWxkfManager/getToken',
+  [ManagerCenterRequestTypes.REGISTER]: '/puppetWxkfManager/register',
+  [ManagerCenterRequestTypes.DEREGISTER]: '/puppetWxkfManager/deregister',
+}
+
+export type ManagerCenterRequestTypeMapping = {
+  [ManagerCenterRequestTypes.GET_ACCESS_TOKEN]: GetAccessTokenRequest,
+  [ManagerCenterRequestTypes.REGISTER]: RegisterWxkfPuppetRequest,
+  [ManagerCenterRequestTypes.DEREGISTER]: DeregisterWxkfPuppetRequest,
+}
+
+export type ManagerCenterResponseTypeMapping = {
+  [ManagerCenterRequestTypes.GET_ACCESS_TOKEN]: GetAccessTokenResponse,
+  [ManagerCenterRequestTypes.REGISTER]: RegisterWxkfPuppetResponse,
+  [ManagerCenterRequestTypes.DEREGISTER]: DeregisterWxkfPuppetResponse,
 }
