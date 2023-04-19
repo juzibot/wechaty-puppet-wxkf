@@ -94,7 +94,7 @@ export const getOss = (ossOptions: OssOptions): OssOptions => {
 
 export const getManagerCenterConfig = (managerCenterConfig?: ManagerCenterConfig) => {
   const config = {
-    endpoint: managerCenterConfig?.endpoint || process.env['PUPPET_WXKF_MANAGER_CENTER_ENDPOINT'],
+    endpoint: managerCenterConfig?.endpoint || process.env['PUPPET_WXKF_MANAGER_ENDPOINT'],
     selfEndpoint: managerCenterConfig?.selfEndpoint || process.env['PUPPET_WXKF_SELF_ENDPOINT'],
   }
 
