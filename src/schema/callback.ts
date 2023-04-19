@@ -29,3 +29,8 @@ export interface EventXmlData {
     OpenKfId: string[], // 有新消息的客服帐号。可通过sync_msg接口指定open_kfid获取此客服帐号的消息
   }
 }
+
+export interface DecryptedMessageEventData {
+  token: string,
+  openKfId: string,
+}

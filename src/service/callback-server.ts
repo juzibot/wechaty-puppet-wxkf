@@ -4,7 +4,7 @@ import bodyParser from 'body-parser'
 import { Logger } from '../wechaty-dep'
 import * as crypto from '@wecom/crypto'
 import xml2js from 'xml2js'
-import { GetCallbackData, PostCallbackData, BodyXmlData, EventXmlData } from 'src/schema/callback'
+import { GetCallbackData, PostCallbackData, BodyXmlData, EventXmlData, DecryptedMessageEventData } from 'src/schema/callback'
 import { CallbackServerEvents } from '../schema/event'
 import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'node:events'
@@ -29,6 +29,8 @@ export class CallbackServer extends (EventEmitter as new () => TypedEmitter<Call
     
     this.app.get('/callback', this.onGetCallback.bind(this) as typeof this.onGetCallback)
     this.app.post('/callback', this.onPostCallback.bind(this) as typeof this.onPostCallback)
+    this.app.post('/callback/decrypted', this.onDecryptedMessageCallback.bind(this) as typeof this.onDecryptedMessageCallback)
+
 
     this.server = this.app.listen(port, () => {
       this.logger.info(`callback server started on port ${port}`)
@@ -95,7 +97,22 @@ export class CallbackServer extends (EventEmitter as new () => TypedEmitter<Call
       this.emit('message', messageObject.xml.Token[0])
     }
 
-    res.send('')
+    res.send('success')
+  }
+
+  onDecryptedMessageCallback(req: express.Request, res: express.Response) {
+    this.logger.info(`receive verify message: ${JSON.stringify(req.body)}`)
+
+    const data = req.body as DecryptedMessageEventData
+
+    if (data.openKfId !== this.authData.kfOpenId) {
+      this.logger.warn('message kfOpenId does not match, will dismiss')
+      res.status(500)
+      res.send('kfOpenId not match')
+      return
+    }
+
+    this.emit('message', data.openKfId)
   }
 
   onStop() {
