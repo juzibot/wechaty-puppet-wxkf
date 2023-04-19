@@ -25,13 +25,7 @@ puppet.on('message', async payload => {
 })
 
 puppet.on('ready', async payload => {
-  // console.log(payload)
-
-  // await new Promise(resolve => {
-  //   setTimeout(resolve, 10 * 1000)
-  // })
-
-  // void puppet.stop()
+  console.log(payload)
 })
 
-puppet.start()
+void puppet.start()
