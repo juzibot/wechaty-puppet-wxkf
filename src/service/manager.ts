@@ -205,10 +205,16 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
           open_kfid: this.authData.kfOpenId,
           token
         }
-        const responseData = await this.request(RequestTypes.SYNC_MESSAGE, requestData)
-        hasNext = responseData.has_more === TrueOrFalse.TRUE
-        cursor = responseData.next_cursor
-        void this.handleMessages(responseData.msg_list, firstSync)
+        try {
+          const responseData = await this.request(RequestTypes.SYNC_MESSAGE, requestData)
+          hasNext = responseData.has_more === TrueOrFalse.TRUE
+          cursor = responseData.next_cursor
+          void this.handleMessages(responseData.msg_list, firstSync)
+        } catch (e) {
+          this.logger.error(`get message failed for ${(e as Error).message}`)
+          hasNext = false
+        }
+        
       }
       await this.cacheService.setProperty('messageSeq', cursor)
 
