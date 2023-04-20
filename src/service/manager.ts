@@ -50,6 +50,8 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   private registered = false
 
+  private readonly deregister: () => Promise<void>
+
   constructor(options: PuppetWxkfOptions) {
     super()
     const authData = getAuthData(options['authData'])
@@ -84,6 +86,10 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
       return config
     })
+    this.deregister = async () => {
+      await this.deregisterPuppet()
+      process.exit(0)
+    }
   }
 
   async onStart() {
@@ -97,6 +103,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       this.authData.kfName = selfInfo.name
     }
     await this.registerPuppet()
+    process.on('SIGINT', this.deregister)
 
     this.cacheService.onStart(selfInfo.id)
     await this.cacheService.setContact(selfInfo.id, selfInfo)
@@ -115,6 +122,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     await this.cacheService.onStop()
     this.callbackServer.onStop()
     await this.deregisterPuppet()
+    process.off('SIGTERM', this.deregister)
   }
 
   private async getAccessToken() {
@@ -693,6 +701,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
   async deregisterPuppet() {
     if (!this.managerCenterConfig) {
       this.logger.info('manager endpoint not set, skip deregister')
+      return
     }
     if (!this.registered) {
       this.logger.info('bot is not registered, skip deregister')
