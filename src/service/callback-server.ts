@@ -112,7 +112,7 @@ export class CallbackServer extends (EventEmitter as new () => TypedEmitter<Call
       return
     }
 
-    this.emit('message', data.openKfId)
+    this.emit('message', data.token)
   }
 
   onStop() {
