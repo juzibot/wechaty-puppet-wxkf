@@ -42,7 +42,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   private accessToken?: string
   // private accessTokenExpireTime?: number
-  private accessTokenTimestamp?: number
+  // private accessTokenTimestamp?: number
   private accessTokenExpireTimestamp?: number
   private accessTokenRenewTimer: NodeJS.Timeout
 
@@ -127,7 +127,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   private async getAccessToken() {
     return ExecQueueService.exec(async () => {
-      if (Date.now() - this.accessTokenTimestamp < 10 * MINUTE && this.accessToken && Date.now() < this.accessTokenExpireTimestamp) {
+      if (this.accessToken && Date.now() < this.accessTokenExpireTimestamp) {
         return
       }
       if (this.accessTokenRenewTimer) {
@@ -158,7 +158,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       }
       this.accessTokenRenewTimer = setTimeout(() => {
         void this.getAccessToken()
-      }, response.data.expires_in * 1000 - 10 * MINUTE)
+      }, response.data.expires_in * 1000 - MINUTE)
     }, {
       queueId: 'get-access-token',
       delayAfter: 100,
