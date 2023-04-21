@@ -42,7 +42,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   private accessToken?: string
   // private accessTokenExpireTime?: number
-  // private accessTokenTimestamp?: number
+  private accessTokenTimestamp?: number
   private accessTokenExpireTimestamp?: number
   private accessTokenRenewTimer: NodeJS.Timeout
 
@@ -148,6 +148,7 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
       if (this.accessToken !== response.data.access_token) {
         this.accessToken = response.data.access_token
         this.accessTokenTimestamp = Date.now()
+        this.logger.info(`got new accessToken at ${new Date(this.accessTokenTimestamp)}: ${this.accessToken}`)
       }
 
       this.accessTokenExpireTimestamp = timestampToMilliseconds(Date.now() + response.data.expires_in * 1000)
