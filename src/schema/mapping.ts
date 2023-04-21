@@ -34,6 +34,10 @@ export type ResponseTypeMapping = {
   [RequestTypes.BATCH_GET_CUSTOMER_INFO]: GetContactInfoResponse
 }
 
+export enum TencentErrorCodes {
+  ACCESS_TOKEN_EXPIRED = 42001,
+}
+
 export enum ManagerCenterRequestTypes {
   GET_ACCESS_TOKEN,
   REGISTER,

@@ -4,7 +4,7 @@ import { CallbackServer } from './callback-server'
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
 import { MINUTE, SECOND, timestampToMilliseconds } from '../util/time'
 import { ExecQueueService } from './exec-queue'
-import { baseUrl, ManagerCenterRequestTypes, managerCenterUrlMapping, RequestTypeMapping, RequestTypes, ResponseTypeMapping, urlMapping } from '../schema/mapping'
+import { baseUrl, ManagerCenterRequestTypes, managerCenterUrlMapping, RequestTypeMapping, RequestTypes, ResponseTypeMapping, TencentErrorCodes, urlMapping } from '../schema/mapping'
 import WxkfError from '../error/error'
 import { WXKF_ERROR, WXKF_ERROR_CODE } from '../error/error-code'
 import { DownloadMediaRequest, DownloadMediaResponse, FileMessageTypes, FileTypes, GetKfAccountListRequest, GetAccessTokenRequest, GetAccessTokenResponse, ImageMessage, LocationMessage, MiniProgramMessage, MsgType, SendMessageRequest, TextMessage, TrueOrFalse, UploadMediaRequest, UploadMediaResponse, VoiceFormat, WxkfReceiveMessage, LinkMessageSend, MessageReceiveTypes, RegisterWxkfPuppetRequest, RegisterWxkfPuppetResponse, DeregisterWxkfPuppetRequest, DeregisterWxkfPuppetResponse } from '../schema/request'
@@ -125,10 +125,18 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
     process.off('SIGTERM', this.deregister)
   }
 
-  private async getAccessToken() {
+  private async getAccessToken(force = false) {
     return ExecQueueService.exec(async () => {
-      if (this.accessToken && Date.now() < this.accessTokenExpireTimestamp) {
-        return
+      if (force) {
+        if (Date.now() - this.accessTokenTimestamp < 2 * MINUTE) {
+          this.logger.warn(`just got access token within 2 minutes, skip this force get`)
+          return
+        }
+      } {
+        if (this.accessToken && Date.now() < this.accessTokenExpireTimestamp) {
+          this.logger.warn(`access token not expired, no need to get`)
+          return
+        }
       }
       if (this.accessTokenRenewTimer) {
         clearTimeout(this.accessTokenRenewTimer)
@@ -167,12 +175,21 @@ export class Manager extends (EventEmitter as new () => TypedEmitter<ManagerEven
 
   }
 
-  private async request<T extends RequestTypes>(type: T, data: RequestTypeMapping[T]):Promise<ResponseTypeMapping[T]> {
+  private async request<T extends RequestTypes>(type: T, data: RequestTypeMapping[T], isRetry = false):Promise<ResponseTypeMapping[T]> {
     this.logger.info(`request(${RequestTypes[type]}, ${JSON.stringify(data)})`)
     const response = await this.postRequestInstance.post<ResponseTypeMapping[T], AxiosResponse<ResponseTypeMapping[T]>, RequestTypeMapping[T]>(urlMapping[type], data)
 
     const responseData = response.data
     if (responseData.errcode) {
+      if (responseData.errcode === TencentErrorCodes.ACCESS_TOKEN_EXPIRED) {
+        if (isRetry) {
+          throw new WxkfError(WXKF_ERROR.AUTH_ERROR, `request failed even if re-get access token`)
+        } else {
+          await this.getAccessToken()
+          return this.request(type, data, true)
+        }
+      }
+
       throw new WxkfError(WXKF_ERROR_CODE.SERVER_ERROR, 
         KnownErrorCodeReason[String(responseData.errcode)]
           || `request error with code: ${responseData.errcode}, message: ${responseData.errmsg}`
