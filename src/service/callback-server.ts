@@ -113,6 +113,8 @@ export class CallbackServer extends (EventEmitter as new () => TypedEmitter<Call
     }
 
     this.emit('message', data.token)
+
+    res.send('roger')
   }
 
   onStop() {
