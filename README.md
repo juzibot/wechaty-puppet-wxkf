@@ -8,6 +8,32 @@ A wechaty puppet for Wechat Customer Service, or WXKF (Weixin Ke Fu).
 [![Powered by Wechaty](https://img.shields.io/badge/Powered%20By-Wechaty-brightgreen.svg)](https://github.com/wechaty/wechaty)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 
+## Structure
+
+### Work isolated
+
+![image](./introduction-assets/eng/structure-direct.jpg)
+
+### Work with Wxkf-Manager
+
+![image](./introduction-assets/eng/structure-with-manager.jpg)
+
+### Why do we need this manager?
+
+Either In-house development app and Authorize custom app can take many responsibilities, and WXKF might be just one of them. Also you might create multiple WXKF accounts. So it is almost a must for there to be a manager to listen and dispatch callbacks. That's why we need WXKF-Manager.
+
+To use WXKF-Manager, you need to set up two more envs, PUPPET_WXKF_MANAGER_CENTER_ENDPOINT and PUPPET_WXKF_SELF_ENDPOINT.
+
+```ts
+export PUPPET_WXKF_MANAGER_CENTER_ENDPOINT=http://127.0.0.1:7777
+export PUPPET_WXKF_SELF_ENDPOINT=http://127.0.0.1:8080
+```
+
+PUPPET_WXKF_MANAGER_CENTER_ENDPOINT is the endpoint of WXKF-Manager, puppet will register to this manager with kfId and PUPPET_WXKF_SELF_ENDPOINT so that the manager will callback to puppet when receiving new events.
+
+For more detail about WXKF-Manager, please look into [WXKF-Introduction](https://github.com/juzibot/wechaty-puppet-wxkf/blob/main/README.md). This intro will focus on the direct approach.
+
+
 ## How to use
 
 ### Install dependencies
@@ -51,11 +77,11 @@ bot.start()
 You may notice that we did not listen to 'scan' event when creating the ding-dong bot example. This is not a mistake.
 
 The authentication for WXKF is done by 'WeChat Customer Service
-' app of Wecom Company Ecosystem. You can manage apps in your Wecom company backend.
+' app of Wecom Company Ecosystem. You can manage app in your Wecom company backend.
 
 ![App-manage](./introduction-assets/eng/app-manage.jpg)
 
-Pull down to the bottom of this pages, you can see Wechat Customer Service can be managed by APIs in 3 methods, In-house development, Authorize third-party apps or Authorize custom apps. So far wechaty-puppet-wxkf supports In-house development or Authorize custom apps.
+Pull down to the bottom of this pages, you can see Wechat Customer Service can be managed by APIs in 3 methods, In-house development, Authorize third-party app or Authorize custom app. So far wechaty-puppet-wxkf supports In-house development or Authorize custom app.
 
 ![App-type](./introduction-assets/eng/app-type.jpg)
 
@@ -65,7 +91,7 @@ If you want to manage a new WXKF account, here's what you gonna do.
 
   Note: You can use `name` or `kfId` to identify your Wechat Customer Service account. However you cannot get ID in this webpage but only in apis. So if you want to identify by name, remember to give unique names to your account.
 
-- Allocate the Customer Service account to the app you are developing. You can do this by clicking the 'In-house development' link or the 'Authorize custom apps' link in the above image.
+- Allocate the Customer Service account to the app you are developing. You can do this by clicking the 'In-house development' link or the 'Authorize custom app' link in the above image.
 
 - Get your `token` and `encodingAESKey`. These keys will be used to decrypt callbacks from wecom so you can receive messages.
 
@@ -73,7 +99,7 @@ If you want to manage a new WXKF account, here's what you gonna do.
 
   ![App-key](./introduction-assets/eng/app-key.jpg)
 
-  If you are developing Authorize custom apps, you should find these keys in your custom app page.
+  If you are developing Authorize custom app, you should find these keys in your custom app page.
 
 - Setup callback url. You can put this puppet in a server and set the url to this puppet, however that is not recommended. In that case you can only manage one Wechat Customer Service account. You should setup a service to dispense these messages based on ID. You can use this project, [wxkf-manager](https://github.com/juzibot/wxkf-manager), or you can always build your own service.
 
@@ -81,7 +107,7 @@ If you want to manage a new WXKF account, here's what you gonna do.
 
   If you are developing In-house development app, you can click the 'view' button in above image, and the secret will be sent to your mobile wecom app. Your CorpId, or Company Id, can be found in the 'My Company' tab of wecom admin backend.
 
-  If you are developing Authorize custom apps, these info will be sent to your callback service when the user install your app. Please dig into [Tencent official API references](https://developer.work.weixin.qq.com/document/path/97163) for further information. (Seems there is only Chinese version available.)
+  If you are developing Authorize custom app, these info will be sent to your callback service when the user install your app. Please dig into [Tencent official API references](https://developer.work.weixin.qq.com/document/path/97163) for further information. (Seems there is only Chinese version available.)
 
 - You should also assign a `port`, a web server will listen to this port for callbacks.
 
