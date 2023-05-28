@@ -1,5 +1,5 @@
-import { types } from '../wechaty-dep'
-import { WxkfReceiveMessage, MsgType, MsgTypeChineseName, MessageReceiveTypes } from '../schema/request'
+import { log, types } from '../wechaty-dep'
+import { WxkfReceiveMessage, MsgType, MsgTypeChineseName, MessageReceiveTypes, MessageOrigin } from '../schema/request'
 import { timestampToMilliseconds } from './time'
 import { MessagePayloadCache } from '../schema/cache'
 
@@ -10,6 +10,15 @@ export const convertMessageToPayload = (rawMessage: WxkfReceiveMessage<MessageRe
     timestamp: timestampToMilliseconds(rawMessage.send_time),
     listenerId: rawMessage.open_kfid,
     type: types.Message.Unknown
+  }
+
+  if (rawMessage.origin === MessageOrigin.WECOM_CLIENT) {
+    messagePayload.talkerId = rawMessage.open_kfid
+    messagePayload.listenerId = rawMessage.external_userid
+  }
+
+  if (rawMessage.origin === MessageOrigin.SYSTEM_EVENT) {
+    log.warn(`got a event message in messageHandler, raw message: ${JSON.stringify(rawMessage)}`)
   }
 
   switch (rawMessage.msgtype) {
