@@ -1,3 +1,7 @@
+# Deprecation Announcement
+This project is deprecated and archived. Please try [wechaty-puppet-rabbit](https://github.com/juzibot/puppet-rabbit) with [wxkf-call-center](https://github.com/juzibot/wxkf-call-center) (expected to be open sourced soon, if not already), a modern puppet host easy to horizontally expand, can host multiple tokens in one instance and based on rabbit MQ.
+
+
 # WECHATY PUPPET WXKF
 A wechaty puppet for Wechat Customer Service, or WXKF (Weixin Ke Fu).
 
